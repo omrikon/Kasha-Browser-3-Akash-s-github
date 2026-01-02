@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokeball Collector - 2D Platformer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 50%, #B0E0E6 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            border: 4px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background: #000;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 100%);
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            z-index: 10;
+        }
+
+        #instructions {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 12px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 5px;
+            white-space: nowrap;
+            max-width: 90%;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1200" height="680"></canvas>
+        <div id="ui">
+            <div id="healthDisplay"></div>
+            <div>Kashaballs: <span id="pokeballCount">0</span></div>
+            <div>Kashas Caught: <span id="kashaCount">0</span></div>
+        </div>
+        <div id="instructions">
+            WASD/Arrows: Move | Space/Up: Jump | S/Down: Ground Slam | Q: Throw/Attack | 1-9: Select | Scroll: Inventory | E: Extract Core/Extended | Click: Throw | ESC: Pause
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- GAME LOADING ORDER (don't change this!) -->
+    <!-- ============================================ -->
+
+    <!-- STEP 1: World System -->
+    <script src="05-world/tilemap.js"></script>
+
+    <!-- STEP 2: Core Setup -->
+    <script src="01-core/config.js"></script>
+    <script src="01-core/gameState.js"></script>
+
+    <!-- STEP 3: Game Systems -->
+    <script src="02-systems/audio.js"></script>
+    <script src="02-systems/input.js"></script>
+    <script src="02-systems/level.js"></script>
+    <script src="02-systems/drawing.js"></script>
+    <script src="02-systems/gameLoop.js"></script>
+
+    <!-- STEP 4: Game Classes -->
+    <script src="03-classes/effects.js"></script>
+    <script src="03-classes/particles.js"></script>
+    <script src="03-classes/gameObjects.js"></script>
+    <script src="03-classes/inventory.js"></script>
+    <script src="03-classes/player.js"></script>
+
+    <!-- STEP 5: Creatures -->
+    <!-- Enemies (hostile creatures) -->
+    <script src="04-creatures/enemies/maroon_blob_enemy_1.js"></script>
+    <!-- Kashas (catchable creatures) -->
+    <script src="04-creatures/kashas/cassieduck.js"></script>
+
+    <!-- STEP 6: START THE GAME! -->
+    <script src="main.js"></script>
+</body>
+</html>
