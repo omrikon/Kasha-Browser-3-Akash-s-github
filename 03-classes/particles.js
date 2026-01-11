@@ -1,9 +1,15 @@
 // ============================================================================
 // CLASSES/PARTICLES.JS - Particle Classes
 // ============================================================================
-// This file contains classes for particle effects like falling dirt tiles.
+// This file contains classes for particle effects - small visual elements that
+// move and animate to create visual effects. The main particle type is
+// DirtTile - individual dirt particles that fall when you ground slam and
+// break dirt. These particles have physics (gravity, collision) and eventually
+// settle on the ground, converting into permanent dirt tiles. This creates
+// realistic dirt physics where dirt flies around and settles naturally.
 // ============================================================================
 
+// This message appears in the browser console when the file loads
 console.log('Loading classes/particles.js...');
 
 // Dirt Tile Particle - Falls with gravity and converts to tile when settled

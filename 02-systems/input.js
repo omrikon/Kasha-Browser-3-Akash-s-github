@@ -1,32 +1,57 @@
 // ============================================================================
 // INPUT.JS - Input Handling
 // ============================================================================
-// This file handles all keyboard and mouse input.
+// This file handles all player input - keyboard presses and mouse clicks.
+// It's like the game's "ears" that listen for what the player wants to do.
+// When you press a key or click the mouse, this file detects it and tells
+// the game what action to perform (move, jump, attack, open menu, etc.).
 // ============================================================================
 
+// This message appears in the browser console when the file loads
 console.log('Loading input.js...');
 
-// Input Handling - keys variable is declared in gameState.js
+// ============================================================================
+// KEYBOARD INPUT HANDLING
+// ============================================================================
+// This section listens for keyboard presses and handles all keyboard-based
+// actions like movement, jumping, inventory management, and menu navigation.
+// ============================================================================
 
+// Listen for when a key is pressed down
+// This event fires whenever the player presses any key on the keyboard
 window.addEventListener('keydown', (e) => {
-    // Admin Cheat Code Detection (Hidden - no visual feedback)
-    // Only check if not in level selector menu
+    // ========================================================================
+    // ADMIN CHEAT CODE DETECTION (Hidden developer feature)
+    // ========================================================================
+    // This checks if the player is typing a secret cheat code to access
+    // developer tools. The cheat code is "lop" - type it to open level selector.
+    // ========================================================================
+    
+    // Only check for cheat codes if the level selector isn't already open
     if (!showLevelSelector) {
+        // Get the key that was pressed and convert to lowercase
         const key = e.key.toLowerCase();
-        // Only track alphabetic characters
+        
+        // Only track letter keys (a-z), ignore numbers and special keys
         if (key.length === 1 && /[a-z]/.test(key)) {
+            // Add this key to the cheat code buffer (track recent key presses)
             cheatCodeBuffer += key;
-            // Keep buffer size limited to cheat code length
+            
+            // Keep the buffer from getting too long
+            // Only remember the last few keys (enough for the cheat code)
             if (cheatCodeBuffer.length > CHEAT_CODE.length) {
+                // Remove the oldest key, keep only the most recent ones
                 cheatCodeBuffer = cheatCodeBuffer.slice(-CHEAT_CODE.length);
             }
-            // Check if cheat code matches
+            
+            // Check if the recent keys match the cheat code
             if (cheatCodeBuffer === CHEAT_CODE) {
+                // Cheat code detected! Open the level selector menu
                 showLevelSelector = true;
-                gamePaused = true; // Pause game when selector opens
-                cheatCodeBuffer = ''; // Reset buffer
-                e.preventDefault();
-                return;
+                gamePaused = true; // Pause the game when selector opens
+                cheatCodeBuffer = ''; // Clear the buffer
+                e.preventDefault(); // Prevent default browser behavior
+                return; // Stop processing this key press
             }
         }
     }

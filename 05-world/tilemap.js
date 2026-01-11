@@ -1,8 +1,15 @@
 // ============================================================================
-// TILE SYSTEM - Source of Truth for All Tile-Based Physics
+// TILEMAP.JS - Tile System - Source of Truth for All Tile-Based Physics
 // ============================================================================
-// This file contains all tile-related constants, classes, and methods.
-// Used for Noita-like physics: destructible terrain, liquids, particles, etc.
+// This file contains the tile system - a grid-based world system where the
+// entire game world is divided into small tiles (like a chess board). Each
+// tile can be different types: empty space, solid ground, platforms, dirt,
+// water, oil, fire, etc. This system enables advanced physics like destructible
+// terrain (you can break blocks), liquid physics (water flows), and particle
+// systems (dirt falls and settles). It's inspired by games like Terraria and
+// Noita where you can dig and modify the world. The TileMap class manages
+// this entire grid system and handles collision detection, tile destruction,
+// and tile type queries.
 // ============================================================================
 
 // Tile Constants - Global for access from all scripts

@@ -1,9 +1,14 @@
 // ============================================================================
 // DRAWING.JS - Drawing Functions
 // ============================================================================
-// This file contains all drawing/rendering functions for UI, menus, and game objects.
+// This file contains all the drawing/rendering code - everything that appears
+// on screen. It's like the game's "artist" that draws all the graphics.
+// This includes drawing the player, enemies, platforms, UI elements (health,
+// inventory), menus (pause menu, game over screen), and visual effects.
+// Every visual element you see in the game is drawn by functions in this file.
 // ============================================================================
 
+// This message appears in the browser console when the file loads
 console.log('Loading drawing.js...');
 
 // Update Health Display

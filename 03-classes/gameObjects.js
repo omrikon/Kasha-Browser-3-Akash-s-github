@@ -1,9 +1,15 @@
 // ============================================================================
 // CLASSES/GAMEOBJECTS.JS - Game Object Classes
 // ============================================================================
-// This file contains classes for game objects: Platform, Box, Kashaball, KashaCorpse
+// This file contains classes for various game objects that exist in the world:
+// - Platform: The ground and platforms you can jump on
+// - Box: Question mark boxes that contain kashaballs (break them to get items)
+// - Kashaball: The throwing items you use to catch kashas (like pokeballs)
+// - KashaCorpse: Dead kashas that you can extract cores from
+// Each class handles its own behavior, collision detection, and drawing.
 // ============================================================================
 
+// This message appears in the browser console when the file loads
 console.log('Loading classes/gameObjects.js...');
 
 class Platform {

@@ -1,5 +1,15 @@
+// ============================================================================
+// MAROON_BLOB_ENEMY_1.JS - Maroon Blob Enemy Class
+// ============================================================================
+// This file contains the MaroonBlobEnemy1 class - a basic enemy creature that
+// attacks the player. This enemy patrols back and forth, and when the player
+// gets close, it performs a bite attack. The enemy has health, can take damage
+// from the player's attacks, and dies when health reaches zero. It uses a
+// simple AI to move around and detect when to attack the player.
+// ============================================================================
+
 // Maroon Blob Enemy 1 - A basic enemy creature that attacks the player
-// Now uses tiles
+// Now uses tiles for collision detection
 class MaroonBlobEnemy1 {
     constructor(x, y) {
         this.x = x; // Pixel position

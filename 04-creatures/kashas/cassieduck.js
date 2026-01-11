@@ -1,3 +1,13 @@
+// ============================================================================
+// CASSIEDUCK.JS - CassieDuck Kasha Class
+// ============================================================================
+// This file contains the CassieDuck class - a type of Kasha (catchable creature).
+// Kashas are like Pokemon - you can catch them by throwing kashaballs at them.
+// The CassieDuck waddles around the level, and when hit by a kashaball, it
+// enters a catching animation. Once caught, it becomes an item in your
+// inventory. This is one type of kasha - more types can be added in the future!
+// ============================================================================
+
 // Cassieduck Class - A type of Kasha (catchable NPC) - Now uses tiles
 class CassieDuck {
     constructor(x, y) {

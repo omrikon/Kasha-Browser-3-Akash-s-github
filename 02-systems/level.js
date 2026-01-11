@@ -1,9 +1,15 @@
 // ============================================================================
 // LEVEL.JS - Level Creation and Management
 // ============================================================================
-// This file handles level creation, reset, next level, and level loading.
+// This file handles everything related to game levels - creating them,
+// loading them, resetting them, and moving to the next level. Think of this
+// as the "level designer" that builds the world you play in. It creates
+// platforms, places enemies, spawns items, and sets up the entire level
+// layout. It also handles level progression (completing levels, moving to
+// the next one, etc.).
 // ============================================================================
 
+// This message appears in the browser console when the file loads
 console.log('Loading level.js...');
 
 // Weapon Behavior System (placeholder for future Kasha abilities)

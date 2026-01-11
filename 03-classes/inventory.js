@@ -1,9 +1,15 @@
 // ============================================================================
 // CLASSES/INVENTORY.JS - Inventory System
 // ============================================================================
-// This file contains the Inventory class for managing items, slots, and fusion.
+// This file contains the Inventory class - your item storage system. It manages
+// all your items: kashaballs (throwing items), weapons, caught kashas, and
+// kasha cores. The inventory handles item organization, stacking (multiple
+// of the same item), drag-and-drop between slots, scrolling through items,
+// and the weapon fusion system (combining weapons with kasha cores to create
+// powerful fused weapons). Think of it as your backpack that holds everything!
 // ============================================================================
 
+// This message appears in the browser console when the file loads
 console.log('Loading classes/inventory.js...');
 
 class Inventory {

@@ -1,9 +1,15 @@
 // ============================================================================
 // CLASSES/PLAYER.JS - Player Class
 // ============================================================================
-// This file contains the Player class with movement, combat, and rendering.
+// This file contains the Player class - the character you control in the game.
+// The Player class handles everything about your character: movement (walking,
+// jumping, ground slamming), combat (weapon attacks), health and damage,
+// animations (idle, walking, jumping, etc.), and collision detection
+// (making sure you don't fall through platforms). This is one of the most
+// important classes in the game - it's the main character!
 // ============================================================================
 
+// This message appears in the browser console when the file loads
 console.log('Loading classes/player.js...');
 
 class Player {

@@ -1,9 +1,16 @@
 // ============================================================================
 // GAMELOOP.JS - Main Game Loop and Initialization
 // ============================================================================
-// This file contains the main game loop and game initialization code.
+// This file contains the main game loop - the heart of the game that runs
+// continuously. The game loop is like a movie projector that shows many
+// frames per second. Each frame, it updates everything (player movement,
+// enemy AI, physics, etc.) and then redraws everything on screen. This
+// happens 60 times per second, creating the illusion of smooth animation
+// and responsive gameplay. Without the game loop, nothing would move or
+// respond to your input!
 // ============================================================================
 
+// This message appears in the browser console when the file loads
 console.log('Loading gameLoop.js...');
 
 // Game initialization is now in main.js
