@@ -512,6 +512,188 @@ function createLevel(level = 1) {
             // Fallback to level 1 if level 2 generation fails
             createLevel(1);
         }
+    } else if (level === 3) {
+        // LEVEL 3 - Celeste-style vertical climbing platformer
+        // Features: Vertical climbing, precise platforming, floating platforms
+        
+        const baseGroundY = 550; // Base ground level in pixels
+        const baseGroundTileY = Math.floor(baseGroundY / window.TILE_SIZE);
+        
+        // Create ground platform (starting area)
+        platforms.push(new Platform(0, baseGroundY, 800, 50, '#228B22'));
+        
+        // CELESTE-STYLE VERTICAL CLIMBING SECTIONS
+        // Section 1: Initial vertical climb (right side start)
+        const verticalPlatforms1 = [
+            // Starting platforms (ground level)
+            [800, 500], [1200, 450],
+            // First vertical ascent
+            [1600, 400], [2000, 350], [2400, 300], [2800, 250],
+            // Peak 1
+            [3200, 200], [3600, 200], [4000, 250],
+            // Drop and climb
+            [4400, 300], [4800, 350], [5200, 400],
+            // Second ascent
+            [5600, 350], [6000, 300], [6400, 250], [6800, 200],
+            // Peak 2
+            [7200, 150], [7600, 150], [8000, 200],
+            // Descent
+            [8400, 250], [8800, 300],
+            // Third major climb
+            [9200, 250], [9600, 200], [10000, 150], [10400, 100],
+            [10800, 100], [11200, 150], [11600, 200],
+            // Large drop
+            [12000, 300], [12400, 350],
+            // Fourth climb (bigger platforms)
+            [12800, 300], [13200, 250], [13600, 200], [14000, 150],
+            [14400, 100], [14800, 100], [15200, 150], [15600, 200],
+            // Valley
+            [16000, 300], [16400, 350],
+            // Final major climb
+            [16800, 300], [17200, 250], [17600, 200], [18000, 150],
+            [18400, 100], [18800, 50], [19200, 50], [19600, 100],
+            [20000, 150], [20400, 200], [20800, 250],
+            // Descent to finish
+            [21200, 300], [21600, 350], [22000, 400], [22400, 450],
+            [22800, 500], [23200, baseGroundY - 50]
+        ];
+        
+        verticalPlatforms1.forEach(([x, y]) => {
+            platforms.push(new Platform(x, y, 200, 20));
+        });
+        
+        // Add longer horizontal platforms at key points (landing spots)
+        const horizontalPlatforms = [
+            [3400, 180, 400], [7400, 130, 400], [10900, 80, 400],
+            [14600, 80, 400], [19000, 30, 400]
+        ];
+        
+        horizontalPlatforms.forEach(([x, y, width]) => {
+            platforms.push(new Platform(x, y, width, 20));
+        });
+        
+        // CELESTE-STYLE FLOATING ISLANDS (small precise platforms)
+        const floatingIslands = [
+            // First section - precise jumps
+            [9000, 450], [9400, 400], [9800, 350], [10200, 300],
+            // Second section - alternating pattern
+            [13000, 400], [13400, 350], [13800, 400], [14200, 350],
+            // Third section - zigzag pattern
+            [17000, 400], [17400, 350], [17800, 400], [18200, 350],
+            [18600, 400], [19000, 350],
+            // Fourth section - scattered
+            [21000, 400], [21400, 380], [21800, 360], [22200, 380],
+            [22600, 400], [23000, 420]
+        ];
+        
+        floatingIslands.forEach(([x, y]) => {
+            platforms.push(new Platform(x, y, 150, 20));
+        });
+        
+        // CELESTE-STYLE STEP PLATFORMS (staircase patterns for climbing)
+        const stepPlatforms = [
+            // Right-facing stairs
+            [25000, baseGroundY - 50], [25200, baseGroundY - 100],
+            [25400, baseGroundY - 150], [25600, baseGroundY - 200],
+            // Left-facing stairs
+            [26000, baseGroundY - 200], [26200, baseGroundY - 150],
+            [26400, baseGroundY - 100], [26600, baseGroundY - 50],
+            // Upward spiral
+            [27000, baseGroundY - 50], [27200, baseGroundY - 100],
+            [27400, baseGroundY - 100], [27600, baseGroundY - 150],
+            [27800, baseGroundY - 150], [28000, baseGroundY - 200]
+        ];
+        
+        stepPlatforms.forEach(([x, y]) => {
+            platforms.push(new Platform(x, y, 200, 20));
+        });
+        
+        // Extended ground platforms for continuity
+        for (let i = 1; i < 15; i++) {
+            platforms.push(new Platform(i * 2000, baseGroundY, 2000, 50, '#228B22'));
+        }
+        
+        // Place boxes (kashaball containers) on platforms - Celeste-style collectibles
+        const boxPositions = [
+            // Starting area
+            [900, 460], [1300, 410],
+            // First climb
+            [1700, 360], [2100, 310], [2500, 260], [2900, 210],
+            [3300, 160], [3700, 160], [4100, 210],
+            // Second climb
+            [5700, 310], [6100, 260], [6500, 210], [6900, 160],
+            [7300, 110], [7700, 110], [8100, 160],
+            // Third climb
+            [9300, 210], [9700, 160], [10100, 110], [10500, 60],
+            [10900, 60], [11300, 110], [11700, 160],
+            // Floating islands
+            [9100, 410], [9500, 360], [9900, 310], [10300, 260],
+            [13100, 360], [13500, 310], [13900, 360], [14300, 310],
+            // Steps
+            [25100, 510], [25300, 460], [25500, 410], [25700, 360],
+            [26100, 360], [26300, 410], [26500, 460], [26700, 510]
+        ];
+        
+        boxPositions.forEach(([x, y]) => {
+            boxes.push(new Box(x, y));
+        });
+        
+        // Generate more boxes programmatically on platforms
+        for (let i = 0; i < 100; i++) {
+            const x = 12000 + i * 200;
+            // Find nearest platform
+            let nearestPlatform = verticalPlatforms1.find(p => Math.abs(p[0] - x) < 300);
+            if (nearestPlatform) {
+                boxes.push(new Box(x, nearestPlatform[1] - 40));
+            }
+        }
+        
+        // Place enemies strategically - fewer but more challenging placement
+        const enemyPositions = [
+            // Ground level guards
+            [1000, baseGroundY - 40], [5000, baseGroundY - 40],
+            // Platform guards
+            [1800, 360], [2600, 210], [5800, 310], [6200, 210],
+            [9400, 160], [10200, 60], [13200, 210], [13800, 310],
+            [17200, 160], [18000, 60], [19000, 60],
+            // Floating island guards
+            [9200, 410], [9800, 310], [14200, 310],
+            // Step guards
+            [25200, 460], [25600, 360], [26200, 410], [27200, 460]
+        ];
+        
+        enemyPositions.forEach(([x, y]) => {
+            enemies.push(new MaroonBlobEnemy1(x, y));
+        });
+        
+        // Place kashas (collectibles) on challenging platforms
+        const kashaPositions = [
+            // High platforms (challenging to reach)
+            [3300, 160], [3700, 160], [7400, 110], [7700, 110],
+            [10900, 60], [14600, 60], [19000, 30],
+            // Floating islands
+            [9000, 410], [9400, 360], [13400, 310], [17800, 360],
+            [21400, 340], [21800, 320],
+            // Steps
+            [25600, 360], [27800, 410],
+            // Extended platforms
+            [23000, baseGroundY - 50], [25000, baseGroundY - 50]
+        ];
+        
+        kashaPositions.forEach(([x, y]) => {
+            kashas.push(new CassieDuck(x, y - 35));
+        });
+        
+        // Generate more kashas throughout the level
+        for (let i = 0; i < 20; i++) {
+            const x = 24000 + i * 1000;
+            let nearestPlatform = verticalPlatforms1.find(p => Math.abs(p[0] - x) < 400);
+            if (nearestPlatform && nearestPlatform[1] < baseGroundY) {
+                kashas.push(new CassieDuck(x, nearestPlatform[1] - 35));
+            } else {
+                kashas.push(new CassieDuck(x, baseGroundY - 85));
+            }
+        }
     } else {
         // Future levels can be added here
         // For now, default to level 1 structure if level doesn't exist
