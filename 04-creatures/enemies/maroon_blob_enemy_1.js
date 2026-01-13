@@ -240,9 +240,9 @@ class MaroonBlobEnemy1 {
             if (currentState === BEHAVIOR_STATE.IDLE) {
                 // IDLE: Patrol back and forth
                 this.speed = this.baseSpeed;
-                if (Math.abs(this.x - this.startX) > this.patrolDistance) {
-                    this.direction *= -1;
-                }
+            if (Math.abs(this.x - this.startX) > this.patrolDistance) {
+                this.direction *= -1;
+            }
                 this.velocityX = this.speed * this.direction;
                 
             } else if (currentState === BEHAVIOR_STATE.HUNTING) {
@@ -290,7 +290,7 @@ class MaroonBlobEnemy1 {
                     }
                 } else {
                     // Investigation complete - will transition to idle next frame
-                    this.velocityX = this.speed * this.direction;
+            this.velocityX = this.speed * this.direction;
                 }
             }
         }

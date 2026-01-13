@@ -1465,27 +1465,63 @@ function drawDebugVisualization() {
         }
     });
     
-    // Draw vision cones (green/yellow)
+    // Draw vision cones (green/yellow) - proper vision angle visualization
     enemies.forEach(enemy => {
-        if (!enemy.dead) {
-            // MaroonBlobEnemy1 has 60px detection range
-            const detectionRange = 60;
-            const distanceToPlayer = player ? Math.abs(enemy.x + enemy.width / 2 - (player.x + player.width / 2)) : Infinity;
-            const isDetected = distanceToPlayer < detectionRange;
+        if (!enemy.dead && enemy.visionSystem) {
+            const enemyCenterX = (enemy.x + enemy.width / 2) / pixelScale;
+            const enemyCenterY = (enemy.y + enemy.height / 2) / pixelScale;
+            const visionRange = enemy.visionSystem.visionRange / pixelScale;
+            const visionAngle = enemy.visionSystem.visionAngle || (Math.PI * 2 / 3); // 120 degrees default
+            const direction = enemy.direction || -1; // -1 for left, 1 for right
             
-            internalCtx.strokeStyle = isDetected ? '#00FF00' : '#FFFF00';
+            // Determine if player is visible (check if playerVisible property exists)
+            const isPlayerVisible = enemy.playerVisible || false;
+            
+            // Calculate vision cone angle based on enemy direction
+            // Enemy facing left (direction = -1) means vision cone points left
+            // Enemy facing right (direction = 1) means vision cone points right
+            const baseAngle = direction === 1 ? 0 : Math.PI; // 0 = right, Math.PI = left
+            const startAngle = baseAngle - visionAngle / 2;
+            const endAngle = baseAngle + visionAngle / 2;
+            
+            // Draw vision cone (sector)
+            internalCtx.strokeStyle = isPlayerVisible ? '#00FF00' : '#FFFF00';
+            internalCtx.fillStyle = isPlayerVisible ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 255, 0, 0.1)';
             internalCtx.lineWidth = 1;
             internalCtx.setLineDash([3, 3]);
+            
+            // Draw filled vision cone
             internalCtx.beginPath();
-            internalCtx.arc(
-                (enemy.x + enemy.width / 2) / pixelScale,
-                (enemy.y + enemy.height / 2) / pixelScale,
-                detectionRange / pixelScale,
-                0,
-                Math.PI * 2
-            );
+            internalCtx.moveTo(enemyCenterX, enemyCenterY);
+            internalCtx.arc(enemyCenterX, enemyCenterY, visionRange, startAngle, endAngle);
+            internalCtx.closePath();
+            internalCtx.fill();
             internalCtx.stroke();
+            
             internalCtx.setLineDash([]);
+            
+            // Draw enemy state text above enemy
+            if (enemy.stateMachine) {
+                const state = enemy.stateMachine.getState() || 'idle';
+                const stateText = state.toUpperCase();
+                const textX = enemyCenterX;
+                const textY = (enemy.y - 15) / pixelScale;
+                
+                // Draw text background for readability
+                internalCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                internalCtx.fillRect(textX - 30, textY - 8, 60, 12);
+                
+                // Draw state text
+                internalCtx.fillStyle = '#FFFFFF';
+                internalCtx.font = '10px monospace';
+                internalCtx.textAlign = 'center';
+                internalCtx.textBaseline = 'middle';
+                internalCtx.fillText(stateText, textX, textY);
+                
+                // Reset text alignment
+                internalCtx.textAlign = 'left';
+                internalCtx.textBaseline = 'alphabetic';
+            }
         }
     });
     
