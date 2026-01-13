@@ -2,14 +2,14 @@
 // MAROON_BLOB_ENEMY_1.JS - Maroon Blob Enemy Class
 // ============================================================================
 // This file contains the MaroonBlobEnemy1 class - a basic enemy creature that
-// attacks the player. This enemy patrols back and forth, and when the player
-// gets close, it performs a bite attack. The enemy has health, can take damage
-// from the player's attacks, and dies when health reaches zero. It uses a
-// simple AI to move around and detect when to attack the player.
+// attacks the player. This enemy uses Rain World-inspired AI behaviors including
+// vision system, memory, behavioral states, and investigation. The enemy patrols
+// back and forth, can see the player through vision, remembers last known
+// positions, and investigates when the player disappears.
 // ============================================================================
 
 // Maroon Blob Enemy 1 - A basic enemy creature that attacks the player
-// Now uses tiles for collision detection
+// Now uses tiles for collision detection and advanced AI behaviors
 class MaroonBlobEnemy1 {
     constructor(x, y) {
         this.x = x; // Pixel position
@@ -18,7 +18,10 @@ class MaroonBlobEnemy1 {
         this.height = 40;
         this.velocityX = -1.5;
         this.velocityY = 0;
-        this.speed = 1.5;
+        this.baseSpeed = 1.5; // Base patrol speed
+        this.huntSpeed = 2.5; // Speed when hunting
+        this.investigateSpeed = 1.8; // Speed when investigating
+        this.speed = this.baseSpeed;
         this.onGround = false;
         this.gravity = 0.6;
         this.color = '#8B0000';
@@ -47,6 +50,37 @@ class MaroonBlobEnemy1 {
         this.tileY = 0;
         this.tileWidth = Math.ceil(this.width / (window.TILE_SIZE || 16));
         this.tileHeight = Math.ceil(this.height / (window.TILE_SIZE || 16));
+        
+        // AI Systems (Rain World-inspired)
+        this.visionSystem = new VisionSystem({
+            visionAngle: Math.PI * 2 / 3, // 120 degrees forward
+            visionRange: 300,
+            closeRangeAwareness: 50,
+            canSeeBackwards: false
+        });
+        
+        this.memorySystem = new MemorySystem({
+            memoryDecayTime: 300 // 5 seconds at 60fps
+        });
+        
+        this.stateMachine = new BehaviorStateMachine(BEHAVIOR_STATE.IDLE);
+        
+        this.investigationBehavior = new InvestigationBehavior({
+            searchRadius: 100,
+            scoutDistance: 50,
+            maxInvestigationTime: 180 // 3 seconds
+        });
+        
+        this.estimationSystem = new EstimationSystem({
+            estimationTime: 60,
+            maxEstimationDistance: 200
+        });
+        
+        // Track player visibility and last known position
+        this.playerVisible = false;
+        this.lastKnownPlayerPosition = null;
+        this.lastKnownPlayerVelocity = { x: 0, y: 0 };
+        this.timeSinceLastSighting = 0;
     }
     
     // Update tile position
@@ -74,6 +108,11 @@ class MaroonBlobEnemy1 {
             return;
         }
         
+        // Update AI systems
+        this.memorySystem.update();
+        this.stateMachine.update();
+        this.investigationBehavior.update();
+        
         // Update damage flash
         if (this.damageFlash > 0) {
             this.damageFlash--;
@@ -84,19 +123,85 @@ class MaroonBlobEnemy1 {
             this.attackCooldown--;
         }
         
-        // Check if player is nearby and start attack
-        const distanceToPlayer = Math.abs(this.x - player.x);
-        if (distanceToPlayer < 60 && !this.attacking && this.attackCooldown === 0) {
-            this.attacking = true;
-            this.attackTimer = 0;
-            this.mouthOpen = 0;
-            this.scale = 1.0;
-            this.scaleY = 1.0;
-            // Determine bite direction based on player position
-            this.biteDirection = player.x < this.x ? -1 : 1; // -1 for left, 1 for right
+        // ====================================================================
+        // VISION SYSTEM - Check if enemy can see player
+        // ====================================================================
+        const visionResult = this.visionSystem.canSee(this, player, platforms);
+        const wasPlayerVisible = this.playerVisible;
+        this.playerVisible = visionResult !== null;
+        
+        if (this.playerVisible) {
+            // Player is visible - update memory and tracking
+            this.timeSinceLastSighting = 0;
+            this.lastKnownPlayerPosition = {
+                x: player.x + player.width / 2,
+                y: player.y + player.height / 2
+            };
+            this.lastKnownPlayerVelocity = {
+                x: player.velocityX || 0,
+                y: player.velocityY || 0
+            };
+            this.memorySystem.updateMemory('player', this.lastKnownPlayerPosition, 0);
+        } else {
+            // Player not visible - increment time since last sighting
+            this.timeSinceLastSighting++;
+            if (this.lastKnownPlayerPosition) {
+                this.memorySystem.updateMemory('player', this.lastKnownPlayerPosition, this.timeSinceLastSighting);
+            }
         }
         
-        // Handle attack animation
+        // ====================================================================
+        // BEHAVIORAL STATE MACHINE - Handle state transitions
+        // ====================================================================
+        const currentState = this.stateMachine.getState();
+        
+        // State transitions based on vision and memory
+        if (this.playerVisible && currentState !== BEHAVIOR_STATE.HUNTING) {
+            // Player seen - start hunting
+            this.stateMachine.changeState(BEHAVIOR_STATE.HUNTING);
+            this.investigationBehavior.reset();
+        } else if (!this.playerVisible && currentState === BEHAVIOR_STATE.HUNTING) {
+            // Lost sight of player while hunting - start investigating
+            const memory = this.memorySystem.getMemory('player');
+            if (memory) {
+                this.stateMachine.changeState(BEHAVIOR_STATE.INVESTIGATING);
+                // Estimate where player might have gone
+                const estimatedPos = this.estimationSystem.estimatePosition(
+                    memory.position,
+                    this.lastKnownPlayerVelocity,
+                    this.timeSinceLastSighting
+                );
+                this.investigationBehavior.startInvestigation(estimatedPos);
+            } else {
+                // No memory - return to idle
+                this.stateMachine.changeState(BEHAVIOR_STATE.IDLE);
+                this.investigationBehavior.reset();
+            }
+        } else if (currentState === BEHAVIOR_STATE.INVESTIGATING) {
+            // Check if investigation should end
+            if (this.investigationBehavior.isComplete()) {
+                // Check if player found at remembered position
+                const memory = this.memorySystem.getMemory('player');
+                if (memory && this.memorySystem.isAtRememberedPosition('player', {
+                    x: player.x + player.width / 2,
+                    y: player.y + player.height / 2
+                }, 30)) {
+                    // Player found at remembered position - delete memory and continue hunting
+                    this.memorySystem.deleteMemory('player');
+                } else {
+                    // Nothing found - return to idle
+                    this.stateMachine.changeState(BEHAVIOR_STATE.IDLE);
+                    this.memorySystem.deleteMemory('player');
+                    this.investigationBehavior.reset();
+                }
+            }
+        }
+        
+        // ====================================================================
+        // BEHAVIOR EXECUTION - Act based on current state
+        // ====================================================================
+        
+        // Handle attack animation (can happen in any state if player is close)
         if (this.attacking) {
             this.attackTimer++;
             
@@ -131,12 +236,63 @@ class MaroonBlobEnemy1 {
                 this.attackCooldown = 120;
             }
         } else {
-            // Simple patrol AI - move back and forth
-            if (Math.abs(this.x - this.startX) > this.patrolDistance) {
-                this.direction *= -1;
+            // Not attacking - execute behavior based on state
+            if (currentState === BEHAVIOR_STATE.IDLE) {
+                // IDLE: Patrol back and forth
+                this.speed = this.baseSpeed;
+                if (Math.abs(this.x - this.startX) > this.patrolDistance) {
+                    this.direction *= -1;
+                }
+                this.velocityX = this.speed * this.direction;
+                
+            } else if (currentState === BEHAVIOR_STATE.HUNTING) {
+                // HUNTING: Chase player
+                this.speed = this.huntSpeed;
+                
+                if (this.playerVisible && visionResult) {
+                    // Move toward player
+                    const dx = visionResult.position.x - (this.x + this.width / 2);
+                    this.direction = dx > 0 ? 1 : -1;
+                    this.velocityX = this.speed * this.direction;
+                    
+                    // Check if close enough to attack
+                    const distanceToPlayer = Math.abs(this.x - player.x);
+                    if (distanceToPlayer < 60 && !this.attacking && this.attackCooldown === 0) {
+                        this.attacking = true;
+                        this.attackTimer = 0;
+                        this.mouthOpen = 0;
+                        this.scale = 1.0;
+                        this.scaleY = 1.0;
+                        this.biteDirection = player.x < this.x ? -1 : 1;
+                    }
+                } else {
+                    // Lost sight but still in hunting state (transitioning)
+                    this.velocityX = this.speed * this.direction;
+                }
+                
+            } else if (currentState === BEHAVIOR_STATE.INVESTIGATING) {
+                // INVESTIGATING: Search area around last known position
+                this.speed = this.investigateSpeed;
+                
+                const target = this.investigationBehavior.getCurrentTarget();
+                if (target) {
+                    // Move toward current investigation target
+                    const dx = target.x - (this.x + this.width / 2);
+                    this.direction = dx > 0 ? 1 : -1;
+                    this.velocityX = this.speed * this.direction;
+                    
+                    // Check if reached target
+                    if (this.investigationBehavior.isAtTarget({
+                        x: this.x + this.width / 2,
+                        y: this.y + this.height / 2
+                    }, 20)) {
+                        this.investigationBehavior.nextScoutPoint();
+                    }
+                } else {
+                    // Investigation complete - will transition to idle next frame
+                    this.velocityX = this.speed * this.direction;
+                }
             }
-            
-            this.velocityX = this.speed * this.direction;
         }
         
         // Apply gravity
