@@ -385,32 +385,28 @@ class Kashaball {
         internalCtx.translate((this.x + this.width / 2) / pixelScale, (this.y + this.height / 2) / pixelScale);
         internalCtx.rotate(this.rotation);
         
-        // Draw kashaball (pixelated) - reversed colors: white on top, red on bottom
-        const radius = (this.width / 2) / pixelScale;
-        // Top half (white)
-        internalCtx.fillStyle = '#FFFFFF';
+        // Draw kashaball as blue triangle (pixelated)
+        const size = (this.width / 2) / pixelScale;
+        
+        // Draw triangle (blue)
+        internalCtx.fillStyle = '#0000FF';
         internalCtx.beginPath();
-        internalCtx.arc(0, 0, radius, Math.PI, 0, false);
+        // Equilateral triangle pointing up
+        internalCtx.moveTo(0, -size); // Top point
+        internalCtx.lineTo(-size * 0.866, size * 0.5); // Bottom left (cos(30°) ≈ 0.866, sin(30°) = 0.5)
+        internalCtx.lineTo(size * 0.866, size * 0.5); // Bottom right
+        internalCtx.closePath();
         internalCtx.fill();
         
-        // Bottom half (red)
-        internalCtx.fillStyle = '#FF0000';
-        internalCtx.beginPath();
-        internalCtx.arc(0, 0, radius, 0, Math.PI, false);
-        internalCtx.fill();
-        
-        // Center line
-        internalCtx.strokeStyle = '#000';
+        // Triangle outline
+        internalCtx.strokeStyle = '#000080';
         internalCtx.lineWidth = 1;
-        internalCtx.beginPath();
-        internalCtx.moveTo(-radius, 0);
-        internalCtx.lineTo(radius, 0);
         internalCtx.stroke();
         
         // Center circle
-        internalCtx.fillStyle = '#000';
+        internalCtx.fillStyle = '#FFFFFF';
         internalCtx.beginPath();
-        internalCtx.arc(0, 0, 5 / pixelScale, 0, Math.PI * 2);
+        internalCtx.arc(0, 0, 3 / pixelScale, 0, Math.PI * 2);
         internalCtx.fill();
         
         internalCtx.restore();

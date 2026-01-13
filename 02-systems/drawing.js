@@ -380,33 +380,28 @@ function drawInventorySlot(ctx, x, y, size, item, slotIndex, source) {
     // Draw item if exists
     if (item) {
         if (item.type === 'kashaball') {
-            // Draw kashaball icon
+            // Draw kashaball icon as blue triangle
             const centerX = x + size / 2;
             const centerY = y + size / 2;
-            const radius = size / 4;
+            const triangleSize = size / 3;
             
-            // Top half (white)
-            ctx.fillStyle = '#FFFFFF';
+            // Draw triangle (blue)
+            ctx.fillStyle = '#0000FF';
             ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, Math.PI, 0, false);
+            // Equilateral triangle pointing up
+            ctx.moveTo(centerX, centerY - triangleSize); // Top point
+            ctx.lineTo(centerX - triangleSize * 0.866, centerY + triangleSize * 0.5); // Bottom left
+            ctx.lineTo(centerX + triangleSize * 0.866, centerY + triangleSize * 0.5); // Bottom right
+            ctx.closePath();
             ctx.fill();
             
-            // Bottom half (red)
-            ctx.fillStyle = '#FF0000';
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, Math.PI, false);
-            ctx.fill();
-            
-            // Center line
-            ctx.strokeStyle = '#000';
+            // Triangle outline
+            ctx.strokeStyle = '#000080';
             ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(centerX - radius, centerY);
-            ctx.lineTo(centerX + radius, centerY);
             ctx.stroke();
             
-            // Center circle
-            ctx.fillStyle = '#000';
+            // Center circle (white)
+            ctx.fillStyle = '#FFFFFF';
             ctx.beginPath();
             ctx.arc(centerX, centerY, 3, 0, Math.PI * 2);
             ctx.fill();
@@ -850,33 +845,28 @@ function drawInventoryHUD() {
         // Draw item if exists
         if (item) {
             if (item.type === 'kashaball') {
-                // Draw kashaball icon (simplified)
+                // Draw kashaball icon as blue triangle
                 const centerX = slotX + slotSize / 2;
                 const centerY = slotY + slotSize / 2 + 5;
-                const radius = 12;
+                const triangleSize = 12;
                 
-                // Top half (white)
-                ctx.fillStyle = '#FFFFFF';
+                // Draw triangle (blue)
+                ctx.fillStyle = '#0000FF';
                 ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, Math.PI, 0, false);
+                // Equilateral triangle pointing up
+                ctx.moveTo(centerX, centerY - triangleSize); // Top point
+                ctx.lineTo(centerX - triangleSize * 0.866, centerY + triangleSize * 0.5); // Bottom left
+                ctx.lineTo(centerX + triangleSize * 0.866, centerY + triangleSize * 0.5); // Bottom right
+                ctx.closePath();
                 ctx.fill();
                 
-                // Bottom half (red)
-                ctx.fillStyle = '#FF0000';
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, Math.PI, false);
-                ctx.fill();
-                
-                // Center line
-                ctx.strokeStyle = '#000';
+                // Triangle outline
+                ctx.strokeStyle = '#000080';
                 ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(centerX - radius, centerY);
-                ctx.lineTo(centerX + radius, centerY);
                 ctx.stroke();
                 
-                // Center circle
-                ctx.fillStyle = '#000';
+                // Center circle (white)
+                ctx.fillStyle = '#FFFFFF';
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, 3, 0, Math.PI * 2);
                 ctx.fill();
@@ -954,26 +944,25 @@ function drawInventoryHUD() {
                         if (item.type === 'kashaball') {
                             const centerX = extSlotX + slotSize / 2;
                             const centerY = extSlotY + slotSize / 2 + 5;
-                            const radius = 12;
+                            const triangleSize = 12;
                             
-                            ctx.fillStyle = '#FFFFFF';
+                            // Draw triangle (blue)
+                            ctx.fillStyle = '#0000FF';
                             ctx.beginPath();
-                            ctx.arc(centerX, centerY, radius, Math.PI, 0, false);
+                            // Equilateral triangle pointing up
+                            ctx.moveTo(centerX, centerY - triangleSize); // Top point
+                            ctx.lineTo(centerX - triangleSize * 0.866, centerY + triangleSize * 0.5); // Bottom left
+                            ctx.lineTo(centerX + triangleSize * 0.866, centerY + triangleSize * 0.5); // Bottom right
+                            ctx.closePath();
                             ctx.fill();
                             
-                            ctx.fillStyle = '#FF0000';
-                            ctx.beginPath();
-                            ctx.arc(centerX, centerY, radius, 0, Math.PI, false);
-                            ctx.fill();
-                            
-                            ctx.strokeStyle = '#000';
+                            // Triangle outline
+                            ctx.strokeStyle = '#000080';
                             ctx.lineWidth = 1;
-                            ctx.beginPath();
-                            ctx.moveTo(centerX - radius, centerY);
-                            ctx.lineTo(centerX + radius, centerY);
                             ctx.stroke();
                             
-                            ctx.fillStyle = '#000';
+                            // Center circle (white)
+                            ctx.fillStyle = '#FFFFFF';
                             ctx.beginPath();
                             ctx.arc(centerX, centerY, 3, 0, Math.PI * 2);
                             ctx.fill();
