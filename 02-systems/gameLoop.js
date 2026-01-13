@@ -195,6 +195,9 @@ function gameLoop() {
         drawTrajectory();
     }
     
+    // Draw debug visualization (collision boxes, hitboxes, vision cones, etc.)
+    drawDebugVisualization();
+    
     // Scale up internal canvas to main canvas with pixelation (Terraria-style)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     // Use nearest-neighbor scaling for crisp pixels

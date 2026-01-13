@@ -121,6 +121,10 @@ var cheatCodeBuffer = '';
 // When true, shows a menu where developers can jump to any level
 var showLevelSelector = false;
 
+// Whether debug visualization is enabled (shows collision boxes, hitboxes, etc.)
+// Toggle with 'p' key - displays visual debug information overlaid on the game
+var debugVisualizationEnabled = false;
+
 // ============================================================================
 // INPUT HANDLING
 // ============================================================================

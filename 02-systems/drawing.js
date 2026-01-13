@@ -1164,6 +1164,404 @@ function drawDirtTiles() {
     internalCtx.restore();
 }
 
-// Reset Game Function
+// ============================================================================
+// DEBUG VISUALIZATION
+// ============================================================================
+// Draws debug overlays showing collision boxes, hitboxes, vision cones, etc.
+// Toggle with 'p' key
+// ============================================================================
+
+function drawDebugVisualization() {
+    if (!debugVisualizationEnabled) return;
+    
+    // Save ALL canvas state to prevent affecting sprite rendering
+    internalCtx.save();
+    internalCtx.translate(Math.floor(-cameraX / pixelScale), Math.floor(-cameraY / pixelScale));
+    
+    // Reset any canvas state that might affect rendering
+    internalCtx.globalCompositeOperation = 'source-over';
+    internalCtx.globalAlpha = 1.0;
+    internalCtx.imageSmoothingEnabled = false;
+    
+    // Draw collision boxes (cyan)
+    internalCtx.strokeStyle = '#00FFFF';
+    internalCtx.lineWidth = 1;
+    
+    // Player collision box
+    if (player) {
+        internalCtx.strokeRect(
+            Math.round(player.x / pixelScale),
+            Math.round(player.y / pixelScale),
+            Math.round(player.width / pixelScale),
+            Math.round(player.height / pixelScale)
+        );
+    }
+    
+    // Enemy collision boxes
+    enemies.forEach(enemy => {
+        if (!enemy.dead) {
+            internalCtx.strokeRect(
+                Math.round(enemy.x / pixelScale),
+                Math.round(enemy.y / pixelScale),
+                Math.round(enemy.width / pixelScale),
+                Math.round(enemy.height / pixelScale)
+            );
+        }
+    });
+    
+    // Kasha collision boxes
+    kashas.forEach(kasha => {
+        if (!kasha.caught && !kasha.dead) {
+            internalCtx.strokeRect(
+                Math.round(kasha.x / pixelScale),
+                Math.round(kasha.y / pixelScale),
+                Math.round(kasha.width / pixelScale),
+                Math.round(kasha.height / pixelScale)
+            );
+        }
+    });
+    
+    // Platform collision boxes
+    platforms.forEach(platform => {
+        if (!platform.destroyed) {
+            internalCtx.strokeRect(
+                Math.round(platform.x / pixelScale),
+                Math.round(platform.y / pixelScale),
+                Math.round(platform.width / pixelScale),
+                Math.round(platform.height / pixelScale)
+            );
+        }
+    });
+    
+    // Box collision boxes
+    boxes.forEach(box => {
+        if (!box.hit) {
+            internalCtx.strokeRect(
+                Math.round(box.x / pixelScale),
+                Math.round(box.y / pixelScale),
+                Math.round(box.width / pixelScale),
+                Math.round(box.height / pixelScale)
+            );
+        }
+    });
+    
+    // Kashaball collision boxes
+    kashaballs.forEach(kashaball => {
+        if (!kashaball.collected) {
+            internalCtx.strokeRect(
+                Math.round(kashaball.x / pixelScale),
+                Math.round(kashaball.y / pixelScale),
+                Math.round(kashaball.width / pixelScale),
+                Math.round(kashaball.height / pixelScale)
+            );
+        }
+    });
+    
+    // Draw sprite outlines vs collision boxes (yellow - backup sprite bounds)
+    internalCtx.strokeStyle = '#FFFF00';
+    internalCtx.lineWidth = 1;
+    internalCtx.setLineDash([2, 2]);
+    
+    if (player) {
+        // Player sprite outline (backup bounds)
+        const spriteOffsetX = (player.spriteWidth - player.width) / 2;
+        const spriteOffsetY = (player.spriteHeight - player.height) / 2;
+        internalCtx.strokeRect(
+            Math.round((player.x - spriteOffsetX) / pixelScale),
+            Math.round((player.y - spriteOffsetY) / pixelScale),
+            Math.round(player.spriteWidth / pixelScale),
+            Math.round(player.spriteHeight / pixelScale)
+        );
+    }
+    
+    internalCtx.setLineDash([]);
+    
+    // Draw actual sprite shape outline (pink for organisms - hugs the sprite pixels)
+    internalCtx.strokeStyle = '#FF00FF';
+    internalCtx.lineWidth = 1;
+    internalCtx.setLineDash([]);
+    
+    // Player sprite outline (pink - organism)
+    if (player) {
+        const currentState = player.getCurrentState();
+        const spriteSheet = player.spriteSheets[currentState];
+        
+        if (spriteSheet && spriteSheet.complete && spriteSheet.naturalWidth > 0) {
+            // Calculate actual sprite draw position (matching player.draw() logic)
+            let drawWidth = player.spriteWidth;
+            let drawHeight = player.spriteHeight;
+            let drawX = player.x - (player.spriteWidth - player.width) / 2;
+            let drawY = player.y - (player.spriteHeight - player.height) / 2;
+            
+            // Account for ground slam transformations
+            if (player.groundSlamming && player.slamChargeTime < 5) {
+                drawWidth = player.spriteWidth * 1.2;
+                drawHeight = player.spriteHeight * 0.8;
+                drawX = player.x - (player.spriteWidth - player.width) / 2 - (drawWidth - player.spriteWidth) / 2;
+                drawY = player.y - (player.spriteHeight - player.height) / 2 + (player.spriteHeight - drawHeight);
+            } else if (player.groundSlamming && player.velocityY > 5) {
+                drawWidth = player.spriteWidth * 0.9;
+                drawHeight = player.spriteHeight * 1.1;
+                drawX = player.x - (player.spriteWidth - player.width) / 2 + (player.spriteWidth - drawWidth) / 2;
+                drawY = player.y - (player.spriteHeight - player.height) / 2;
+            }
+            
+            // Apply sprite Y offset
+            const spriteYOffset = -2;
+            drawY = drawY + spriteYOffset;
+            
+            // Get current frame from sprite sheet
+            const frameX = player.animationFrame * player.frameWidth;
+            const frameY = 0;
+            
+            // Draw pink outline based on frame bounds (simpler, doesn't affect sprite rendering)
+            // This creates an outline that hugs the sprite frame dimensions
+            // For a true pixel-perfect outline, we'd need to analyze pixels, but that's too expensive
+            internalCtx.strokeRect(
+                Math.round(drawX / pixelScale),
+                Math.round(drawY / pixelScale),
+                Math.round(drawWidth / pixelScale),
+                Math.round(drawHeight / pixelScale)
+            );
+        }
+    }
+    
+    // Cassieduck sprite outline (pink - organism, traced from programmatic shapes)
+    // Pink line is rendered by tracing the actual shapes (ellipse for body, circle for head, ellipse for bill)
+    // All shapes are drawn in one continuous path to create a single organism outline
+    kashas.forEach(kasha => {
+        if (!kasha.caught && !kasha.dead && kasha.type === 'cassieduck') {
+            const waddleOffset = Math.sin(kasha.waddleFrame * 0.2) * 2;
+            const centerX = (kasha.x + kasha.width / 2) / pixelScale;
+            const centerY = (kasha.y + kasha.height / 2 + waddleOffset) / pixelScale;
+            const headX = (kasha.x + kasha.width / 2 + (kasha.direction * 8)) / pixelScale;
+            const headY = (kasha.y + 8 + waddleOffset) / pixelScale;
+            const billX = (kasha.x + kasha.width / 2 + (kasha.direction * 15)) / pixelScale;
+            const billY = (kasha.y + 10 + waddleOffset) / pixelScale;
+            
+            const bodyRadiusX = (kasha.width / 2) / pixelScale;
+            const bodyRadiusY = (kasha.height / 2.5) / pixelScale;
+            const headRadius = 10 / pixelScale;
+            const billRadiusX = 6 / pixelScale;
+            const billRadiusY = 3 / pixelScale;
+            
+            // Draw all shapes as one continuous outline
+            internalCtx.beginPath();
+            
+            // Body ellipse (main body)
+            internalCtx.ellipse(centerX, centerY, bodyRadiusX, bodyRadiusY, 0, 0, Math.PI * 2);
+            
+            // Head circle (overlaps with body, creates continuous shape)
+            internalCtx.arc(headX, headY, headRadius, 0, Math.PI * 2);
+            
+            // Bill ellipse (extends from head)
+            internalCtx.ellipse(billX, billY, billRadiusX, billRadiusY, 0, 0, Math.PI * 2);
+            
+            // Stroke as one path (browser will render as overlapping shapes creating one outline)
+            internalCtx.stroke();
+        }
+    });
+    
+    // Item outlines (green - for boxes, kashaballs, etc.)
+    internalCtx.strokeStyle = '#00FF00';
+    internalCtx.lineWidth = 1;
+    
+    // Box outlines (items)
+    boxes.forEach(box => {
+        if (!box.hit) {
+            internalCtx.strokeRect(
+                Math.round(box.x / pixelScale),
+                Math.round(box.y / pixelScale),
+                Math.round(box.width / pixelScale),
+                Math.round(box.height / pixelScale)
+            );
+        }
+    });
+    
+    // Kashaball outlines (items)
+    kashaballs.forEach(kashaball => {
+        if (!kashaball.collected) {
+            const centerX = (kashaball.x + kashaball.width / 2) / pixelScale;
+            const centerY = (kashaball.y + kashaball.height / 2) / pixelScale;
+            const radius = (kashaball.width / 2) / pixelScale;
+            internalCtx.beginPath();
+            internalCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            internalCtx.stroke();
+        }
+    });
+    
+    // Draw hitboxes (red/orange)
+    // Player weapon attack hitbox
+    if (player && player.attacking) {
+        const selectedItem = inventory.getSelectedItem();
+        if (selectedItem && selectedItem.type === 'weapon') {
+            const weaponType = selectedItem.data?.weaponType || 'sword';
+            const w = WEAPON_TYPES[weaponType] || WEAPON_TYPES.sword;
+            if (player.attackTimer >= w.hitStart && player.attackTimer < w.hitEnd) {
+                const weaponLength = w.range + player.weaponExtension;
+                const playerCenterX = player.x + player.width / 2;
+                const playerCenterY = player.y + player.height / 2;
+                const baseAngle = player.direction === 1 ? 0 : Math.PI;
+                const finalAngle = baseAngle + player.weaponAngle;
+                
+                // Draw weapon hit arc
+                internalCtx.strokeStyle = '#FF0000';
+                internalCtx.lineWidth = 2;
+                internalCtx.beginPath();
+                internalCtx.arc(
+                    playerCenterX / pixelScale,
+                    playerCenterY / pixelScale,
+                    weaponLength / pixelScale,
+                    finalAngle - w.hitArc / 2,
+                    finalAngle + w.hitArc / 2
+                );
+                internalCtx.lineTo(playerCenterX / pixelScale, playerCenterY / pixelScale);
+                internalCtx.closePath();
+                internalCtx.stroke();
+            }
+        }
+    }
+    
+    // Ground slam hitbox
+    if (player && player.groundSlamming && player.velocityY > 10) {
+        internalCtx.strokeStyle = '#FF8800';
+        internalCtx.lineWidth = 2;
+        const slamRadius = 60;
+        internalCtx.beginPath();
+        internalCtx.arc(
+            (player.x + player.width / 2) / pixelScale,
+            (player.y + player.height) / pixelScale,
+            slamRadius / pixelScale,
+            0,
+            Math.PI * 2
+        );
+        internalCtx.stroke();
+    }
+    
+    // Enemy attack hitboxes
+    enemies.forEach(enemy => {
+        if (!enemy.dead && enemy.attacking && enemy.checkPlayerHit) {
+            // MaroonBlobEnemy1 bite hitbox
+            if (enemy.mouthOpen !== undefined && enemy.mouthOpen > 0.5) {
+                let hitBoxX = enemy.x;
+                let hitBoxWidth = enemy.width;
+                const mouthExtension = 25 * enemy.mouthOpen;
+                if (enemy.biteDirection === -1) {
+                    hitBoxX = enemy.x - mouthExtension;
+                    hitBoxWidth = enemy.width + mouthExtension;
+                } else {
+                    hitBoxWidth = enemy.width + mouthExtension;
+                }
+                
+                internalCtx.strokeStyle = '#FF0000';
+                internalCtx.lineWidth = 2;
+                internalCtx.strokeRect(
+                    Math.round(hitBoxX / pixelScale),
+                    Math.round(enemy.y / pixelScale),
+                    Math.round(hitBoxWidth / pixelScale),
+                    Math.round(enemy.height / pixelScale)
+                );
+            }
+        }
+    });
+    
+    // Draw vision cones (green/yellow)
+    enemies.forEach(enemy => {
+        if (!enemy.dead) {
+            // MaroonBlobEnemy1 has 60px detection range
+            const detectionRange = 60;
+            const distanceToPlayer = player ? Math.abs(enemy.x + enemy.width / 2 - (player.x + player.width / 2)) : Infinity;
+            const isDetected = distanceToPlayer < detectionRange;
+            
+            internalCtx.strokeStyle = isDetected ? '#00FF00' : '#FFFF00';
+            internalCtx.lineWidth = 1;
+            internalCtx.setLineDash([3, 3]);
+            internalCtx.beginPath();
+            internalCtx.arc(
+                (enemy.x + enemy.width / 2) / pixelScale,
+                (enemy.y + enemy.height / 2) / pixelScale,
+                detectionRange / pixelScale,
+                0,
+                Math.PI * 2
+            );
+            internalCtx.stroke();
+            internalCtx.setLineDash([]);
+        }
+    });
+    
+    // Draw patrol paths (blue)
+    internalCtx.strokeStyle = '#0000FF';
+    internalCtx.lineWidth = 1;
+    internalCtx.setLineDash([5, 5]);
+    
+    enemies.forEach(enemy => {
+        if (!enemy.dead && enemy.startX !== undefined && enemy.patrolDistance !== undefined) {
+            const patrolY = enemy.y + enemy.height + 5;
+            const patrolLeft = enemy.startX - enemy.patrolDistance;
+            const patrolRight = enemy.startX + enemy.patrolDistance;
+            
+            // Draw patrol line (full range)
+            internalCtx.beginPath();
+            internalCtx.moveTo(Math.round(patrolLeft / pixelScale), Math.round(patrolY / pixelScale));
+            internalCtx.lineTo(Math.round(patrolRight / pixelScale), Math.round(patrolY / pixelScale));
+            internalCtx.stroke();
+            
+            // Draw start position marker
+            internalCtx.fillStyle = '#0000FF';
+            internalCtx.beginPath();
+            internalCtx.arc(
+                Math.round(enemy.startX / pixelScale),
+                Math.round(patrolY / pixelScale),
+                3,
+                0,
+                Math.PI * 2
+            );
+            internalCtx.fill();
+            
+            // Draw current position indicator
+            internalCtx.fillStyle = '#00FFFF';
+            internalCtx.beginPath();
+            internalCtx.arc(
+                Math.round((enemy.x + enemy.width / 2) / pixelScale),
+                Math.round((enemy.y + enemy.height) / pixelScale),
+                2,
+                0,
+                Math.PI * 2
+            );
+            internalCtx.fill();
+        }
+    });
+    
+    // Kasha patrol paths
+    kashas.forEach(kasha => {
+        if (!kasha.caught && !kasha.dead && kasha.startX !== undefined && kasha.patrolDistance !== undefined) {
+            const patrolY = kasha.y + kasha.height + 5;
+            const patrolLeft = kasha.startX - kasha.patrolDistance;
+            const patrolRight = kasha.startX + kasha.patrolDistance;
+            
+            // Draw patrol line (full range)
+            internalCtx.beginPath();
+            internalCtx.moveTo(Math.round(patrolLeft / pixelScale), Math.round(patrolY / pixelScale));
+            internalCtx.lineTo(Math.round(patrolRight / pixelScale), Math.round(patrolY / pixelScale));
+            internalCtx.stroke();
+            
+            // Draw start position marker
+            internalCtx.fillStyle = '#0000FF';
+            internalCtx.beginPath();
+            internalCtx.arc(
+                Math.round(kasha.startX / pixelScale),
+                Math.round(patrolY / pixelScale),
+                3,
+                0,
+                Math.PI * 2
+            );
+            internalCtx.fill();
+        }
+    });
+    
+    internalCtx.setLineDash([]);
+    
+    internalCtx.restore();
+}
 
 console.log('drawing.js loaded successfully');

@@ -53,6 +53,15 @@ window.addEventListener('keydown', (e) => {
                 e.preventDefault(); // Prevent default browser behavior
                 return; // Stop processing this key press
             }
+            
+            // Check for debug visualization toggle code "pol"
+            if (cheatCodeBuffer === 'pol') {
+                // Debug visualization toggle detected!
+                debugVisualizationEnabled = !debugVisualizationEnabled;
+                cheatCodeBuffer = ''; // Clear the buffer
+                e.preventDefault(); // Prevent default browser behavior
+                return; // Stop processing this key press
+            }
         }
     }
     
