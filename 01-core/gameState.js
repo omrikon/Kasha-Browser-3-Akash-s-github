@@ -50,6 +50,16 @@ var cameraY = 0;
 // When true, a line shows where the kashaball will go when thrown
 var showingTrajectory = false;
 
+// Kashaball charge system state
+// Whether the player is currently charging a kashaball throw (holding Q)
+var kashaballCharging = false;
+
+// How many frames the player has been charging (incremented each frame while charging)
+var kashaballChargeTime = 0;
+
+// Maximum charge time in frames (2 seconds at 60fps)
+var kashaballChargeMaxTime = 120;
+
 // The mouse position in the game world (accounts for camera movement)
 // This is where the mouse is in the actual game world, not just on screen
 var mouseX = 0;

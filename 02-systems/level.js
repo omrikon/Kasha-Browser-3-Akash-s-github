@@ -711,16 +711,18 @@ function throwKashaball() {
     player.throwing = true;
     player.throwFrame = player.throwDuration;
     
-    // Calculate trajectory: parabolic arc toward mouse position
-    const throwSpeed = 12;
-    const startX = player.x + player.width / 2;
-    const startY = player.y + player.height / 2;
-    const deltaX = mouseX - startX;
-    const deltaY = mouseY - startY;
+    // Calculate charge percentage (can exceed 1.0 if charging continues)
+    const chargePercent = kashaballChargeTime / kashaballChargeMaxTime;
     
-    // Calculate angle directly from mouse position - allows aiming in any direction
-    // atan2 gives angle in radians from player to mouse position
-    const throwAngle = Math.atan2(deltaY, deltaX);
+    // Calculate throw speed based on charge (min 6, max 18)
+    const minSpeed = 6;
+    const maxSpeed = 18;
+    const throwSpeed = minSpeed + (maxSpeed - minSpeed) * chargePercent;
+    
+    // Fixed angle: 45 degrees upward in player facing direction
+    // For upward throws in canvas (Y increases downward), we need negative Y velocity
+    // Right: -45 degrees (up-right), Left: -135 degrees (up-left)
+    const throwAngle = player.direction === -1 ? (Math.PI * 5 / 4) : (-Math.PI / 4);
     
     // Calculate velocities for parabolic trajectory
     const velocityX = Math.cos(throwAngle) * throwSpeed;
@@ -733,6 +735,10 @@ function throwKashaball() {
     
     kashaballs.push(kashaball);
     inventory.removeItem('kashaball', 1);
+    
+    // Reset charge state
+    kashaballCharging = false;
+    kashaballChargeTime = 0;
     
     // Update UI (keep for compatibility)
     kashaballsCollected = inventory.getItemCount('kashaball');

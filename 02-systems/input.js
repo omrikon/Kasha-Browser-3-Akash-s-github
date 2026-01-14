@@ -144,11 +144,13 @@ window.addEventListener('keydown', (e) => {
         e.preventDefault();
     }
     
-    // Action button (Q) - now general action button
+    // Action button (Q) - charge kashaball throw
     if (e.key.toLowerCase() === 'q' && !gamePaused) {
         const selectedItem = inventory.getSelectedItem();
         if (selectedItem && selectedItem.type === 'kashaball' && selectedItem.count > 0) {
-            showingTrajectory = true;
+            // Start charging
+            kashaballCharging = true;
+            kashaballChargeTime = 0;
         }
     }
     
@@ -177,7 +179,12 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('keyup', (e) => {
     keys[e.key.toLowerCase()] = false;
     if (e.key.toLowerCase() === 'q') {
-        showingTrajectory = false;
+        // Throw kashaball if charging
+        if (kashaballCharging) {
+            throwKashaball();
+            kashaballCharging = false;
+            kashaballChargeTime = 0;
+        }
     }
 });
 
@@ -193,11 +200,6 @@ function updateMousePosition(e) {
         rawMouseX = newX;
         rawMouseY = newY;
         lastMouseUpdateTime = performance.now();
-        
-        // Debug log mouse updates
-        if (showingTrajectory) {
-            console.log('MOUSE EVENT:', e.type, `x=${rawMouseX.toFixed(1)}, y=${rawMouseY.toFixed(1)}`);
-        }
     }
 }
 
@@ -329,14 +331,6 @@ canvas.addEventListener('mousedown', (e) => {
     }
     
     if (gamePaused) return;
-    if (e.button === 0 && showingTrajectory) {
-        const selectedItem = inventory.getSelectedItem();
-        if (selectedItem && selectedItem.type === 'kashaball' && selectedItem.count > 0) {
-            // Left mouse click - throw kashaball
-            throwKashaball();
-            showingTrajectory = false;
-        }
-    }
 });
 
 // Mouse up handler for dropping items

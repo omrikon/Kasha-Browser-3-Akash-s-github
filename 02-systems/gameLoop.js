@@ -127,6 +127,21 @@ function gameLoop() {
         // Update camera
         updateCamera();
         
+        // Update kashaball charge state
+        if (kashaballCharging) {
+            const selectedItem = inventory.getSelectedItem();
+            if (selectedItem && selectedItem.type === 'kashaball' && selectedItem.count > 0) {
+                kashaballChargeTime++;
+                if (kashaballChargeTime > kashaballChargeMaxTime) {
+                    kashaballChargeTime = kashaballChargeMaxTime;
+                }
+            } else {
+                // Stop charging if no kashaball selected or no kashaballs available
+                kashaballCharging = false;
+                kashaballChargeTime = 0;
+            }
+        }
+        
         // Check if player reached the end of the level
         // Player reaches end when they get close to the right edge (within 200 pixels)
         if (player.x + player.width >= levelWidth - 200) {
@@ -153,14 +168,6 @@ function gameLoop() {
     const prevMouseY = mouseY;
     mouseX = rawMouseX * pixelScale + cameraX;
     mouseY = rawMouseY * pixelScale + cameraY;
-    
-    // Debug: warn if mouse hasn't updated in a while
-    if (showingTrajectory) {
-        const timeSinceLastUpdate = performance.now() - lastMouseUpdateTime;
-        if (timeSinceLastUpdate > 100) {
-            console.warn('MOUSE STALE:', `No mouse update for ${timeSinceLastUpdate.toFixed(0)}ms`);
-        }
-    }
     
     // Draw game objects
     platforms.forEach(platform => platform.draw());

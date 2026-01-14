@@ -415,6 +415,29 @@ class Player {
                         const slamY = collisionInfo.pixelY;
                         groundSlamEffects.push(new GroundSlamEffect(slamX, slamY));
                         
+                        // Spawn rare dirt particles on neutral groundslam (60% chance, 1-2 particles)
+                        if (Math.random() < 0.6) {
+                            const particleCount = Math.random() < 0.5 ? 1 : 2;
+                            for (let i = 0; i < particleCount; i++) {
+                                // Random position near slam point
+                                const offsetX = (Math.random() - 0.5) * 20;
+                                const offsetY = (Math.random() - 0.5) * 10;
+                                // Random velocity outward from slam point
+                                const angle = Math.random() * Math.PI * 2;
+                                const speed = 0.5 + Math.random() * 0.5;
+                                const velX = Math.cos(angle) * speed;
+                                const velY = -0.3 - Math.random() * 0.4; // Slight upward pop
+                                
+                                const dirtParticle = new DirtTile(
+                                    slamX + offsetX,
+                                    slamY + offsetY,
+                                    velX,
+                                    velY
+                                );
+                                dirtTiles.push(dirtParticle);
+                            }
+                        }
+                        
                         // Ground slam tile interaction
                         const slamRadius = 60;
                         const dislodgedDirtTiles = window.worldMap.dislodgeDirtTiles(slamX, slamY, slamRadius, 8);
@@ -529,6 +552,29 @@ class Player {
                         const slamX = this.x + this.width / 2;
                         const slamY = platform.y;
                         groundSlamEffects.push(new GroundSlamEffect(slamX, slamY));
+                        
+                        // Spawn rare dirt particles on neutral groundslam (60% chance, 1-2 particles)
+                        if (Math.random() < 0.6) {
+                            const particleCount = Math.random() < 0.5 ? 1 : 2;
+                            for (let i = 0; i < particleCount; i++) {
+                                // Random position near slam point
+                                const offsetX = (Math.random() - 0.5) * 20;
+                                const offsetY = (Math.random() - 0.5) * 10;
+                                // Random velocity outward from slam point
+                                const angle = Math.random() * Math.PI * 2;
+                                const speed = 0.5 + Math.random() * 0.5;
+                                const velX = Math.cos(angle) * speed;
+                                const velY = -0.3 - Math.random() * 0.4; // Slight upward pop
+                                
+                                const dirtParticle = new DirtTile(
+                                    slamX + offsetX,
+                                    slamY + offsetY,
+                                    velX,
+                                    velY
+                                );
+                                dirtTiles.push(dirtParticle);
+                            }
+                        }
                         
                         // Ground slam tile interaction - destroy destructible/platform tiles and dislodge DIRT tiles
                         // Only destroy tiles when actually landing, not while falling

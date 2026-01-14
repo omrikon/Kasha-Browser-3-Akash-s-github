@@ -32,7 +32,7 @@ function updateHealthDisplay() {
 
 function drawTrajectory() {
     const selectedItem = inventory.getSelectedItem();
-    if (!showingTrajectory || !selectedItem || selectedItem.type !== 'kashaball' || selectedItem.count <= 0) return;
+    if (!kashaballCharging || !selectedItem || selectedItem.type !== 'kashaball' || selectedItem.count <= 0) return;
     
     internalCtx.save();
     internalCtx.translate(-cameraX / pixelScale, -cameraY / pixelScale);
@@ -40,32 +40,26 @@ function drawTrajectory() {
     const startX = player.x + player.width / 2;
     const startY = player.y + player.height / 2;
     
-    // Calculate trajectory: parabolic arc toward mouse position
-    const throwSpeed = 12;
-    const deltaX = mouseX - startX;
-    const deltaY = mouseY - startY;
+    // Calculate charge percentage (can exceed 1.0 if charging continues)
+    const chargePercent = kashaballChargeTime / kashaballChargeMaxTime;
     
-    // Calculate angle directly from mouse position - allows aiming in any direction
-    // atan2 gives angle in radians from player to mouse position
-    const throwAngle = Math.atan2(deltaY, deltaX);
+    // Calculate throw speed based on charge (min 6, max 18)
+    const minSpeed = 6;
+    const maxSpeed = 18;
+    const throwSpeed = minSpeed + (maxSpeed - minSpeed) * chargePercent;
+    
+    // Fixed angle: 45 degrees upward in player facing direction
+    // For upward throws in canvas (Y increases downward), we need negative Y velocity
+    // Right: -45 degrees (up-right), Left: -135 degrees (up-left)
+    const throwAngle = player.direction === -1 ? (Math.PI * 5 / 4) : (-Math.PI / 4);
+    
+    // Pre-calculate cos/sin for consistency
+    const cosAngle = Math.cos(throwAngle);
+    const sinAngle = Math.sin(throwAngle);
     
     // Calculate velocities for parabolic trajectory
-    const velocityX = Math.cos(throwAngle) * throwSpeed;
-    const velocityY = Math.sin(throwAngle) * throwSpeed;
-    
-    // DEBUG: Log all relevant values (throttled to avoid spam)
-    const now = performance.now();
-    if (now - lastDebugTime > 100) { // Log every 100ms
-        console.log('=== TRAJECTORY DEBUG ===');
-        console.log('Raw Mouse:', `rawMouseX=${rawMouseX.toFixed(1)}, rawMouseY=${rawMouseY.toFixed(1)}`);
-        console.log('World Mouse:', `mouseX=${mouseX.toFixed(1)}, mouseY=${mouseY.toFixed(1)}`);
-        console.log('Player Pos:', `startX=${startX.toFixed(1)}, startY=${startY.toFixed(1)}`);
-        console.log('Camera:', `cameraX=${cameraX.toFixed(1)}, cameraY=${cameraY.toFixed(1)}`);
-        console.log('Delta:', `deltaX=${deltaX.toFixed(1)}, deltaY=${deltaY.toFixed(1)}`);
-        console.log('Angle:', `throwAngle=${(throwAngle * 180 / Math.PI).toFixed(1)}°`);
-        console.log('Velocities:', `vx=${velocityX.toFixed(2)}, vy=${velocityY.toFixed(2)}`);
-        lastDebugTime = now;
-    }
+    const velocityX = cosAngle * throwSpeed;
+    const velocityY = sinAngle * throwSpeed;
     
     // Simulate trajectory path with gravity (creates parabolic arc)
     let x = startX;
@@ -74,39 +68,46 @@ function drawTrajectory() {
     let vy = velocityY;
     const gravity = 0.5;
     const points = [];
+    const maxSteps = 400; // Maximum simulation steps
     
-    // Calculate path for preview (parabolic arc)
-    // Use more iterations and smaller steps for smoother curve
-    for (let i = 0; i < 240; i++) {
+    // Calculate path for preview (parabolic arc) - no clamps, run full simulation
+    // Store points directly without rounding to maintain smooth trajectory
+    for (let i = 0; i < maxSteps; i++) {
         points.push({ x, y });
         vy += gravity; // Gravity pulls down, creating parabolic arc
         x += vx;
         y += vy;
-        
-        // Stop if we hit ground level
-        if (y > 550) break;
     }
     
-    if (now - lastDebugTime > 100) {
-        console.log('Trajectory Points:', points.length, 'points');
-        if (points.length > 0) {
-            console.log('First point:', `x=${points[0].x.toFixed(1)}, y=${points[0].y.toFixed(1)}`);
-            if (points.length > 10) {
-                const midPoint = Math.floor(points.length / 2);
-                console.log('Mid point:', `x=${points[midPoint].x.toFixed(1)}, y=${points[midPoint].y.toFixed(1)}`);
-            }
-            console.log('Last point:', `x=${points[points.length - 1].x.toFixed(1)}, y=${points[points.length - 1].y.toFixed(1)}`);
-        }
-        console.log('========================');
+    // Calculate color based on charge (Blue → Cyan → White)
+    let r, g, b;
+    if (chargePercent < 0.5) {
+        // Blue to Cyan
+        const t = chargePercent * 2; // 0 to 1 for first half
+        r = Math.round(0 + (0 - 0) * t);
+        g = Math.round(150 + (255 - 150) * t);
+        b = Math.round(255 + (255 - 255) * t);
+    } else {
+        // Cyan to White
+        const t = (chargePercent - 0.5) * 2; // 0 to 1 for second half
+        r = Math.round(0 + (255 - 0) * t);
+        g = Math.round(255 + (255 - 255) * t);
+        b = Math.round(255 + (255 - 255) * t);
     }
     
-    // Draw trajectory line
-    internalCtx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    const colorString = `rgba(${r}, ${g}, ${b}, 0.7)`;
+    
+    // Draw trajectory line with smooth rendering
+    internalCtx.strokeStyle = colorString;
     internalCtx.lineWidth = 1;
+    internalCtx.lineCap = 'round';
+    internalCtx.lineJoin = 'round';
     internalCtx.setLineDash([3, 3]);
     internalCtx.beginPath();
     if (points.length > 0) {
+        // Use moveTo for first point
         internalCtx.moveTo(points[0].x / pixelScale, points[0].y / pixelScale);
+        // Draw line segments smoothly
         for (let i = 1; i < points.length; i++) {
             internalCtx.lineTo(points[i].x / pixelScale, points[i].y / pixelScale);
         }
@@ -115,7 +116,7 @@ function drawTrajectory() {
     internalCtx.setLineDash([]);
     
     // Draw start point
-    internalCtx.fillStyle = '#FFFFFF';
+    internalCtx.fillStyle = colorString;
     internalCtx.beginPath();
     internalCtx.arc(startX / pixelScale, startY / pixelScale, 5 / pixelScale, 0, Math.PI * 2);
     internalCtx.fill();
@@ -123,10 +124,12 @@ function drawTrajectory() {
     // Draw end point
     if (points.length > 0) {
         const endPoint = points[points.length - 1];
-        internalCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        internalCtx.fillStyle = colorString;
+        internalCtx.globalAlpha = 0.5;
         internalCtx.beginPath();
         internalCtx.arc(endPoint.x / pixelScale, endPoint.y / pixelScale, 8 / pixelScale, 0, Math.PI * 2);
         internalCtx.fill();
+        internalCtx.globalAlpha = 1.0;
     }
     
     internalCtx.restore();
@@ -365,6 +368,69 @@ function drawPauseMenu() {
     ctx.restore();
 }
 
+// Helper function to draw a kasha sprite based on type
+function drawKashaSprite(ctx, x, y, size, kashaType) {
+    // Default to cassieduck if type not specified
+    const type = kashaType || 'cassieduck';
+    
+    if (type === 'cassieduck') {
+        // Draw duck head (smaller, positioned for top-right)
+        const headX = x + size * 0.7; // Top right position
+        const headY = y + size * 0.25;
+        const headSize = size * 0.25;
+        
+        // Duck head (yellow circle)
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(headX, headY, headSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Duck bill (orange)
+        ctx.fillStyle = '#FF8C00';
+        ctx.beginPath();
+        ctx.ellipse(headX + headSize * 0.5, headY + headSize * 0.3, headSize * 0.4, headSize * 0.25, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Duck eye
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(headX - headSize * 0.3, headY - headSize * 0.3, 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    // Add more kasha types here in the future
+}
+
+// Helper function to draw a kashaball icon
+function drawKashaballIcon(ctx, x, y, size) {
+    const ballX = x + size * 0.25; // Bottom left position
+    const ballY = y + size * 0.75;
+    const triangleSize = size * 0.25;
+    
+    const centerX = ballX;
+    const centerY = ballY;
+    
+    // Draw triangle (blue)
+    ctx.fillStyle = '#0000FF';
+    ctx.beginPath();
+    // Equilateral triangle pointing up
+    ctx.moveTo(centerX, centerY - triangleSize); // Top point
+    ctx.lineTo(centerX - triangleSize * 0.866, centerY + triangleSize * 0.5); // Bottom left
+    ctx.lineTo(centerX + triangleSize * 0.866, centerY + triangleSize * 0.5); // Bottom right
+    ctx.closePath();
+    ctx.fill();
+    
+    // Triangle outline
+    ctx.strokeStyle = '#000080';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    // Center circle (white)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 3, 0, Math.PI * 2);
+    ctx.fill();
+}
+
 // Helper function to draw an inventory slot
 function drawInventorySlot(ctx, x, y, size, item, slotIndex, source) {
     // Slot background
@@ -414,27 +480,20 @@ function drawInventorySlot(ctx, x, y, size, item, slotIndex, source) {
                 ctx.fillText(item.count.toString(), x + size - 5, y + size - 5);
             }
         } else if (item.type === 'kasha') {
-            // Draw kasha icon (small duck head)
-            const centerX = x + size / 2;
-            const centerY = y + size / 2;
+            // Draw captured kasha: ball in bottom left, sprite in top right
+            const kashaType = item.data?.type || 'cassieduck';
             
-            // Duck head (yellow circle)
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath();
-            ctx.arc(centerX, centerY - 5, size / 6, 0, Math.PI * 2);
-            ctx.fill();
+            // Check if kasha is "used" (future feature - show only ball)
+            const isUsed = item.data?.used || false;
             
-            // Duck bill (orange)
-            ctx.fillStyle = '#FF8C00';
-            ctx.beginPath();
-            ctx.ellipse(centerX, centerY + 2, size / 8, size / 12, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Duck eye
-            ctx.fillStyle = '#000';
-            ctx.beginPath();
-            ctx.arc(centerX - 3, centerY - 7, 2, 0, Math.PI * 2);
-            ctx.fill();
+            if (isUsed) {
+                // Future: when kasha is used, show only the ball
+                drawKashaballIcon(ctx, x, y, size);
+            } else {
+                // Normal captured state: ball + sprite
+                drawKashaballIcon(ctx, x, y, size);
+                drawKashaSprite(ctx, x, y, size, kashaType);
+            }
         } else if (item.type === 'kasha_core') {
             // Draw Kasha core icon (glowing orb)
             const centerX = x + size / 2;
@@ -879,27 +938,20 @@ function drawInventoryHUD() {
                     ctx.fillText(item.count.toString(), slotX + slotSize - 3, slotY + slotSize - 3);
                 }
             } else if (item.type === 'kasha') {
-                // Draw a simple kasha icon (e.g. small yellow duck head)
-                const centerX = slotX + slotSize / 2;
-                const centerY = slotY + slotSize / 2;
+                // Draw captured kasha: ball in bottom left, sprite in top right
+                const kashaType = item.data?.type || 'cassieduck';
                 
-                // Head
-                ctx.fillStyle = '#FFD700';
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, 12, 0, Math.PI * 2);
-                ctx.fill();
+                // Check if kasha is "used" (future feature - show only ball)
+                const isUsed = item.data?.used || false;
                 
-                // Beak
-                ctx.fillStyle = '#FF8C00';
-                ctx.beginPath();
-                ctx.ellipse(centerX + 8, centerY + 2, 6, 3, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Eye
-                ctx.fillStyle = '#000000';
-                ctx.beginPath();
-                ctx.arc(centerX - 4, centerY - 4, 2, 0, Math.PI * 2);
-                ctx.fill();
+                if (isUsed) {
+                    // Future: when kasha is used, show only the ball
+                    drawKashaballIcon(ctx, slotX, slotY, slotSize);
+                } else {
+                    // Normal captured state: ball + sprite
+                    drawKashaballIcon(ctx, slotX, slotY, slotSize);
+                    drawKashaSprite(ctx, slotX, slotY, slotSize, kashaType);
+                }
             }
         }
     }
@@ -974,24 +1026,20 @@ function drawInventoryHUD() {
                                 ctx.fillText(item.count.toString(), extSlotX + slotSize - 3, extSlotY + slotSize - 3);
                             }
                         } else if (item.type === 'kasha') {
-                            // Draw kasha icon
-                            const centerX = extSlotX + slotSize / 2;
-                            const centerY = extSlotY + slotSize / 2;
+                            // Draw captured kasha: ball in bottom left, sprite in top right
+                            const kashaType = item.data?.type || 'cassieduck';
                             
-                            ctx.fillStyle = '#FFD700';
-                            ctx.beginPath();
-                            ctx.arc(centerX, centerY - 5, 8, 0, Math.PI * 2);
-                            ctx.fill();
+                            // Check if kasha is "used" (future feature - show only ball)
+                            const isUsed = item.data?.used || false;
                             
-                            ctx.fillStyle = '#FF8C00';
-                            ctx.beginPath();
-                            ctx.ellipse(centerX, centerY + 2, 4, 2, 0, 0, Math.PI * 2);
-                            ctx.fill();
-                            
-                            ctx.fillStyle = '#000';
-                            ctx.beginPath();
-                            ctx.arc(centerX - 3, centerY - 7, 2, 0, Math.PI * 2);
-                            ctx.fill();
+                            if (isUsed) {
+                                // Future: when kasha is used, show only the ball
+                                drawKashaballIcon(ctx, extSlotX, extSlotY, slotSize);
+                            } else {
+                                // Normal captured state: ball + sprite
+                                drawKashaballIcon(ctx, extSlotX, extSlotY, slotSize);
+                                drawKashaSprite(ctx, extSlotX, extSlotY, slotSize, kashaType);
+                            }
                         }
                     }
                 }
