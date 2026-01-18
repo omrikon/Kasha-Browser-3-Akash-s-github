@@ -711,13 +711,17 @@ function throwKashaball() {
     player.throwing = true;
     player.throwFrame = player.throwDuration;
     
-    // Calculate charge percentage (can exceed 1.0 if charging continues)
-    const chargePercent = kashaballChargeTime / kashaballChargeMaxTime;
+    // Calculate charge percentage (clamped to prevent jittering at max charge)
+    const clampedChargeTime = Math.min(Math.max(0, kashaballChargeTime), kashaballChargeMaxTime);
+    const isMaxCharge = clampedChargeTime >= kashaballChargeMaxTime;
+    // When at max charge, use exact 1.0 instead of calculating to avoid floating point precision issues
+    const chargePercent = isMaxCharge ? 1.0 : (clampedChargeTime / kashaballChargeMaxTime);
     
     // Calculate throw speed based on charge (min 6, max 18)
     const minSpeed = 6;
     const maxSpeed = 18;
-    const throwSpeed = minSpeed + (maxSpeed - minSpeed) * chargePercent;
+    // If at max charge, use exact maxSpeed to avoid calculation precision issues
+    const throwSpeed = isMaxCharge ? maxSpeed : (minSpeed + (maxSpeed - minSpeed) * chargePercent);
     
     // Fixed angle: 45 degrees upward in player facing direction
     // For upward throws in canvas (Y increases downward), we need negative Y velocity

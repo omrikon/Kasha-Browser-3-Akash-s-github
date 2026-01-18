@@ -674,7 +674,10 @@ class Player {
                     this.slamAnimationFrame = 0;
                 }
                 // Bottom collision (hitting platform from below)
-                else if (this.velocityY < 0 && this.y - this.velocityY > platform.y + platform.height) {
+                // Check if player's top is moving up into the platform's bottom
+                // Player was below platform bottom (prevY >= platform.y + platform.height) 
+                // and now colliding (this.y <= platform.y + platform.height)
+                else if (this.velocityY < 0 && prevY >= platform.y + platform.height && this.y <= platform.y + platform.height) {
                     this.y = platform.y + platform.height;
                     this.velocityY = 0;
                 }

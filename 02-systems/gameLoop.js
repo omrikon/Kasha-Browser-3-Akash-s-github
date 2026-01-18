@@ -131,7 +131,11 @@ function gameLoop() {
         if (kashaballCharging) {
             const selectedItem = inventory.getSelectedItem();
             if (selectedItem && selectedItem.type === 'kashaball' && selectedItem.count > 0) {
-                kashaballChargeTime++;
+                // Only increment if not at max to prevent jittering
+                if (kashaballChargeTime < kashaballChargeMaxTime) {
+                    kashaballChargeTime++;
+                }
+                // Ensure it never exceeds max (safety clamp)
                 if (kashaballChargeTime > kashaballChargeMaxTime) {
                     kashaballChargeTime = kashaballChargeMaxTime;
                 }
