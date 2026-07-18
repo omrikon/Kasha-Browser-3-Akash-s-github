@@ -97,10 +97,13 @@ function createLevel(level = 1) {
     enemies.length = 0;
     kashas.length = 0;
     
-    // Initialize tile map (calculate size based on level width)
-    // For now, all levels use the same width, but this can be customized per level later
-    levelWidth = 52000; // Total level width in pixels (update global)
-    const levelHeight = 2000; // Total level height in pixels
+    // Initialize tile map (size depends on level)
+    if (level === 2) {
+        levelWidth = window.LEVEL2_WIDTH || 11200;
+    } else {
+        levelWidth = 52000;
+    }
+    const levelHeight = (level === 2 && window.LEVEL2_HEIGHT) ? window.LEVEL2_HEIGHT : 2000;
     const mapWidth = Math.ceil(levelWidth / window.TILE_SIZE);
     const mapHeight = Math.ceil(levelHeight / window.TILE_SIZE);
     window.worldMap = new TileMap(mapWidth, mapHeight);
@@ -210,306 +213,16 @@ function createLevel(level = 1) {
             kashas.push(new CassieDuck(x, platformY - 35));
         }
     } else if (level === 2) {
-        // LEVEL 2 - Terraria-style terrain with hills, dungeons, and varied biomes
+        // LEVEL 2 - Mario-style athletic course (see level2.js)
         try {
-        const baseGroundY = 550; // Base ground level in pixels
-        const baseGroundTileY = Math.floor(baseGroundY / window.TILE_SIZE);
-        
-        // Generate terrain height map using multiple noise functions (Terraria-style)
-        const terrainHeights = [];
-        for (let tx = 0; tx < mapWidth; tx++) {
-            // Combine multiple sine waves for natural-looking hills
-            const height1 = Math.sin(tx * 0.02) * 8; // Large hills
-            const height2 = Math.sin(tx * 0.05) * 4; // Medium hills
-            const height3 = Math.sin(tx * 0.1) * 2; // Small hills
-            const height4 = Math.sin(tx * 0.15) * 1; // Tiny variations
-            const totalHeight = height1 + height2 + height3 + height4;
-            
-            // Base height with variation
-            const groundHeight = baseGroundTileY + Math.floor(totalHeight);
-            terrainHeights.push(groundHeight);
-        }
-        
-        // Create terrain layers (Terraria-style: grass on top, stone below, dirt in between)
-        for (let tx = 0; tx < mapWidth; tx++) {
-            const surfaceY = terrainHeights[tx];
-            const depth = 15 + Math.floor(Math.random() * 10); // 15-25 tiles deep
-            
-            for (let ty = 0; ty < depth; ty++) {
-                const tileY = surfaceY + ty;
-                if (tileY >= mapHeight) break;
-                
-                let tileType;
-                if (ty === 0) {
-                    // Surface layer - mostly grass, some dirt patches
-                    tileType = Math.random() < 0.7 ? window.TILE_TYPE.GRASS : window.TILE_TYPE.DIRT;
-                } else if (ty < 3) {
-                    // Top layers - dirt
-                    tileType = window.TILE_TYPE.DIRT;
-                } else {
-                    // Deep layers - stone
-                    tileType = window.TILE_TYPE.STONE;
-                }
-                
-                window.worldMap.setTile(tx, tileY, tileType);
+            if (typeof buildLevel2 === 'function') {
+                buildLevel2();
+            } else {
+                console.error('buildLevel2 missing — is level2.js loaded?');
+                createLevel(1);
             }
-        }
-        
-        // Add underground stone layers (Terraria-style depth)
-        for (let tx = 0; tx < mapWidth; tx++) {
-            const surfaceY = terrainHeights[tx];
-            const deepStart = surfaceY + 20;
-            const deepEnd = Math.min(mapHeight, deepStart + 30);
-            
-            for (let ty = deepStart; ty < deepEnd; ty++) {
-                if (window.worldMap.getTile(tx, ty) === window.TILE_TYPE.EMPTY) {
-                    window.worldMap.setTile(tx, ty, window.TILE_TYPE.STONE);
-                }
-            }
-        }
-        
-        // Create dungeons (Terraria-style underground structures)
-        for (let dungeonNum = 0; dungeonNum < 8; dungeonNum++) {
-            const dungeonX = 2000 + dungeonNum * 6000 + Math.random() * 2000;
-            const dungeonStartY = baseGroundTileY + 10 + Math.floor(Math.random() * 15);
-            
-            // Dungeon entrance (vertical shaft)
-            const entranceWidth = 3;
-            const entranceDepth = 8 + Math.floor(Math.random() * 12);
-            const tileX = Math.floor(dungeonX / window.TILE_SIZE);
-            
-            for (let py = 0; py < entranceDepth; py++) {
-                for (let px = 0; px < entranceWidth; px++) {
-                    const tx = tileX + px;
-                    const ty = dungeonStartY + py;
-                    if (tx < mapWidth && ty < mapHeight) {
-                        // Carve out entrance
-                        if (window.worldMap.isSolidTile(window.worldMap.getTile(tx, ty))) {
-                            window.worldMap.setTile(tx, ty, window.TILE_TYPE.EMPTY);
-                        }
-                    }
-                }
-            }
-            
-            // Dungeon rooms (horizontal chambers)
-            const roomY = dungeonStartY + entranceDepth;
-            const roomWidth = 12 + Math.floor(Math.random() * 20);
-            const roomHeight = 6 + Math.floor(Math.random() * 8);
-            
-            // Main room
-            for (let py = 0; py < roomHeight; py++) {
-                for (let px = 0; px < roomWidth; px++) {
-                    const tx = tileX + px;
-                    const ty = roomY + py;
-                    if (tx < mapWidth && ty < mapHeight) {
-                        window.worldMap.setTile(tx, ty, window.TILE_TYPE.EMPTY);
-                    }
-                }
-            }
-            
-            // Dungeon walls (STONE)
-            for (let px = 0; px < roomWidth; px++) {
-                const tx = tileX + px;
-                const floorY = roomY + roomHeight;
-                if (tx < mapWidth && floorY < mapHeight) {
-                    // Floor
-                    window.worldMap.setTile(tx, floorY, window.TILE_TYPE.STONE);
-                    // Ceiling
-                    if (roomY > 0) {
-                        window.worldMap.setTile(tx, roomY - 1, window.TILE_TYPE.STONE);
-                    }
-                }
-            }
-            // Side walls
-            for (let py = 0; py < roomHeight; py++) {
-                const ty = roomY + py;
-                if (tileX > 0 && ty < mapHeight) {
-                    window.worldMap.setTile(tileX - 1, ty, window.TILE_TYPE.STONE);
-                }
-                if (tileX + roomWidth < mapWidth && ty < mapHeight) {
-                    window.worldMap.setTile(tileX + roomWidth, ty, window.TILE_TYPE.STONE);
-                }
-            }
-        }
-        
-        // Create natural caves (winding underground passages)
-        for (let caveNum = 0; caveNum < 15; caveNum++) {
-            const caveStartX = 1000 + caveNum * 3000 + Math.random() * 1000;
-            const caveStartY = baseGroundTileY + 5 + Math.floor(Math.random() * 20);
-            const caveLength = 20 + Math.floor(Math.random() * 30);
-            const caveWidth = 3 + Math.floor(Math.random() * 4);
-            
-            let currentX = Math.floor(caveStartX / window.TILE_SIZE);
-            let currentY = caveStartY;
-            let direction = Math.random() < 0.5 ? -1 : 1; // Start going up or down
-            
-            for (let step = 0; step < caveLength; step++) {
-                // Carve out cave segment
-                for (let wy = 0; wy < caveWidth; wy++) {
-                    for (let wx = 0; wx < 3; wx++) {
-                        const tx = currentX + wx;
-                        const ty = currentY + wy;
-                        if (tx < mapWidth && ty < mapHeight && ty > 0) {
-                            window.worldMap.setTile(tx, ty, window.TILE_TYPE.EMPTY);
-                        }
-                    }
-                }
-                
-                // Move cave forward and change direction occasionally
-                currentX += 2;
-                if (Math.random() < 0.3) {
-                    direction *= -1; // Change vertical direction
-                }
-                currentY += direction;
-                
-                // Keep cave within bounds
-                if (currentY < baseGroundTileY) currentY = baseGroundTileY;
-                if (currentY > mapHeight - 10) currentY = mapHeight - 10;
-            }
-        }
-        
-        // Create floating islands (Terraria-style sky islands)
-        for (let islandNum = 0; islandNum < 25; islandNum++) {
-            const islandX = 500 + islandNum * 2000 + Math.random() * 1000;
-            const islandY = 50 + Math.sin(islandNum * 0.5) * 80 + Math.random() * 100;
-            const islandWidth = 8 + Math.floor(Math.random() * 12);
-            const islandHeight = 4 + Math.floor(Math.random() * 6);
-            
-            const tileX = Math.floor(islandX / window.TILE_SIZE);
-            const tileY = Math.floor(islandY / window.TILE_SIZE);
-            
-            // Island base (STONE)
-            for (let py = 0; py < islandHeight; py++) {
-                for (let px = 0; px < islandWidth; px++) {
-                    if (tileX + px < mapWidth && tileY + py < mapHeight) {
-                        const tileType = py === 0 ? window.TILE_TYPE.GRASS : window.TILE_TYPE.DIRT;
-                        window.worldMap.setTile(tileX + px, tileY + py, tileType);
-                    }
-                }
-            }
-        }
-        
-        // Create water lakes in valleys
-        for (let lakeNum = 0; lakeNum < 12; lakeNum++) {
-            const lakeX = 1500 + lakeNum * 4000 + Math.random() * 1500;
-            const lakeTileX = Math.floor(lakeX / window.TILE_SIZE);
-            
-            // Find a valley (low point in terrain)
-            let lowestY = terrainHeights[lakeTileX];
-            for (let checkX = Math.max(0, lakeTileX - 5); checkX < Math.min(mapWidth, lakeTileX + 5); checkX++) {
-                if (terrainHeights[checkX] < lowestY) {
-                    lowestY = terrainHeights[checkX];
-                }
-            }
-            
-            const lakeY = lowestY;
-            const lakeWidth = 8 + Math.floor(Math.random() * 15);
-            const lakeDepth = 4 + Math.floor(Math.random() * 6);
-            
-            for (let py = 0; py < lakeDepth; py++) {
-                for (let px = 0; px < lakeWidth; px++) {
-                    const tx = lakeTileX + px;
-                    const ty = lakeY + py;
-                    if (tx < mapWidth && ty < mapHeight) {
-                        const belowTile = window.worldMap.getTile(tx, ty + 1);
-                        if (window.worldMap.isSolidTile(belowTile)) {
-                            window.worldMap.setTile(tx, ty, window.TILE_TYPE.WATER);
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Create oil deposits underground
-        for (let oilNum = 0; oilNum < 10; oilNum++) {
-            const oilX = 2000 + oilNum * 5000 + Math.random() * 2000;
-            const oilY = baseGroundTileY + 15 + Math.floor(Math.random() * 20);
-            const oilWidth = 6 + Math.floor(Math.random() * 8);
-            const oilHeight = 3 + Math.floor(Math.random() * 4);
-            
-            const tileX = Math.floor(oilX / window.TILE_SIZE);
-            const tileY = oilY;
-            
-            for (let py = 0; py < oilHeight; py++) {
-                for (let px = 0; px < oilWidth; px++) {
-                    if (tileX + px < mapWidth && tileY + py < mapHeight) {
-                        const belowTile = window.worldMap.getTile(tileX + px, tileY + py + 1);
-                        if (window.worldMap.isSolidTile(belowTile)) {
-                            window.worldMap.setTile(tileX + px, tileY + py, window.TILE_TYPE.OIL);
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Create destructible rock formations on surface
-        for (let rockNum = 0; rockNum < 30; rockNum++) {
-            const rockX = 1000 + rockNum * 1500 + Math.random() * 800;
-            const rockTileX = Math.floor(rockX / window.TILE_SIZE);
-            const surfaceY = terrainHeights[rockTileX];
-            const rockY = surfaceY - 1; // On surface
-            const rockWidth = 2 + Math.floor(Math.random() * 4);
-            const rockHeight = 3 + Math.floor(Math.random() * 5);
-            
-            for (let py = 0; py < rockHeight; py++) {
-                for (let px = 0; px < rockWidth; px++) {
-                    const tx = rockTileX + px;
-                    const ty = rockY - py; // Build upward
-                    if (tx < mapWidth && ty >= 0 && ty < mapHeight) {
-                        if (window.worldMap.getTile(tx, ty) === window.TILE_TYPE.EMPTY) {
-                            window.worldMap.setTile(tx, ty, window.TILE_TYPE.DESTRUCTIBLE);
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Helper function to find top surface of solid tile at x position
-        const findTopSurface = (x) => {
-            const tileX = Math.floor(x / window.TILE_SIZE);
-            // Scan from top to bottom to find first solid tile with empty space above
-            for (let ty = 1; ty < mapHeight; ty++) {
-                const tile = window.worldMap.getTile(tileX, ty);
-                const aboveTile = window.worldMap.getTile(tileX, ty - 1);
-                // If current tile is solid and tile above is empty, we found a surface
-                if (tile !== window.TILE_TYPE.EMPTY && tile !== window.TILE_TYPE.WATER && 
-                    tile !== window.TILE_TYPE.OIL && tile !== window.TILE_TYPE.FIRE &&
-                    aboveTile === window.TILE_TYPE.EMPTY) {
-                    return ty * window.TILE_SIZE; // Return pixel Y of top of tile
-                }
-            }
-            return null;
-        };
-        
-        // Place boxes on tile platforms
-        for (let i = 0; i < 150; i++) {
-            const x = 500 + i * 300 + Math.random() * 200;
-            const foundY = findTopSurface(x);
-            if (foundY !== null) {
-                boxes.push(new Box(x, foundY - 40));
-            }
-        }
-        
-        // Place enemies on solid tiles
-        for (let i = 0; i < 60; i++) {
-            const x = 1000 + i * 800 + Math.random() * 400;
-            const foundY = findTopSurface(x);
-            if (foundY !== null) {
-                enemies.push(new MaroonBlobEnemy1(x, foundY - 40));
-            }
-        }
-        
-        // Place kashas on solid tiles
-        for (let i = 0; i < 40; i++) {
-            const x = 2000 + i * 1200 + Math.random() * 600;
-            const foundY = findTopSurface(x);
-            if (foundY !== null) {
-                kashas.push(new CassieDuck(x, foundY - 35));
-            }
-        }
         } catch (error) {
             console.error('Error generating level 2:', error);
-            // Fallback to level 1 if level 2 generation fails
             createLevel(1);
         }
     } else if (level === 3) {
@@ -816,7 +529,7 @@ function resetGame() {
         platform.destructionTime = 0;
     }
     
-    // Reset all enemies
+    // Reset all enemies (fields optional — mixed enemy types)
     for (let enemy of enemies) {
         enemy.health = enemy.maxHealth;
         enemy.dead = false;
@@ -825,14 +538,15 @@ function resetGame() {
         enemy.attacking = false;
         enemy.attackTimer = 0;
         enemy.attackCooldown = 0;
-        enemy.mouthOpen = 0;
-        enemy.scale = 1.0;
-        enemy.scaleY = 1.0;
-        enemy.biteDirection = 0;
+        if (enemy.mouthOpen !== undefined) enemy.mouthOpen = 0;
+        if (enemy.scale !== undefined) enemy.scale = 1.0;
+        if (enemy.scaleY !== undefined) enemy.scaleY = 1.0;
+        if (enemy.biteDirection !== undefined) enemy.biteDirection = 0;
+        if (enemy.snoutExtend !== undefined) enemy.snoutExtend = 0;
+        if (enemy.lungePhase !== undefined) enemy.lungePhase = 'none';
         enemy.rotation = 0;
-        enemy.velocityX = enemy.speed * enemy.direction;
+        enemy.velocityX = (enemy.speed || enemy.baseSpeed || 1) * (enemy.direction || 1);
         enemy.velocityY = 0;
-        // Reset position to start
         enemy.x = enemy.startX;
         enemy.y = enemy.startY;
     }
@@ -862,12 +576,6 @@ function nextLevel() {
     // Increment level
     currentLevel++;
     
-    // Reset player position
-    player.x = 100;
-    player.y = 470;
-    player.velocityX = 0;
-    player.velocityY = 0;
-    
     // Reset level finished state
     levelFinished = false;
     gamePaused = false;
@@ -885,6 +593,26 @@ function nextLevel() {
     
     // Create new level
     createLevel(currentLevel);
+    
+    // Spawn after level exists (tile surface for L2)
+    player.x = 100;
+    player.y = 470;
+    if (currentLevel === 2 && window.worldMap) {
+        for (let tx = 0; tx < Math.min(40, window.worldMap.width); tx++) {
+            for (let ty = 1; ty < window.worldMap.height; ty++) {
+                const tile = window.worldMap.getTile(tx, ty);
+                const aboveTile = window.worldMap.getTile(tx, ty - 1);
+                if (window.worldMap.isSolidTile(tile) && aboveTile === window.TILE_TYPE.EMPTY) {
+                    player.x = tx * window.TILE_SIZE;
+                    player.y = ty * window.TILE_SIZE - player.height;
+                    tx = window.worldMap.width;
+                    break;
+                }
+            }
+        }
+    }
+    player.velocityX = 0;
+    player.velocityY = 0;
     
     // Clear button bounds
     window.levelFinishedButtonBounds = null;
@@ -931,7 +659,8 @@ function loadLevel(levelNum) {
                     tile !== window.TILE_TYPE.OIL && tile !== window.TILE_TYPE.FIRE &&
                     aboveTile === window.TILE_TYPE.EMPTY) {
                     spawnX = tx * window.TILE_SIZE;
-                    spawnY = (ty - 1) * window.TILE_SIZE - player.height;
+                    // Feet on top of solid surface tile
+                    spawnY = ty * window.TILE_SIZE - player.height;
                     break;
                 }
             }
