@@ -5,7 +5,13 @@ references/repos/*
 # Rain World Devlog offline archive (~1.3GB images/gifs) - never push
 references/devlogs/rain-world-devlog-archive/
 
+# Noita Wiki offline archive (XML dump, images, talks, curated extracts) - never push
+references/wikis/noita-wiki-archive/
+
 # Optional: keep local media out of git if it gets large
 # Uncomment if needed:
 # references/videos/
 # references/screenshots/
+
+# local archive tooling venv
+references/wikis/.venv-archive/

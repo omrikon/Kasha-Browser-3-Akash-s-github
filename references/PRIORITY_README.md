@@ -21,6 +21,7 @@ If you are unsure whether something is too close to a reference: **leave it out*
 | `screenshots/` | Playwright MCP / browser screenshots |
 | `videos/` | Reference clips / recordings |
 | `devlogs/` | Public Devlogs (offline archives). See `devlogs/RAIN_WORLD_DEVLOG.md` |
+| `wikis/` | Offline wiki archives + topic clusters. See `wikis/NOITA_WIKI.md` |
 | `assets/` | Loose reference images / mood material (inspiration only) |
 
 ## Git
@@ -28,3 +29,5 @@ If you are unsure whether something is too close to a reference: **leave it out*
 `references/repos/` is gitignored. Cloned reference repositories must not be pushed to this project's remote.
 
 `references/devlogs/rain-world-devlog-archive/` is also gitignored (large offline media). The index file `references/devlogs/RAIN_WORLD_DEVLOG.md` is tracked.
+
+`references/wikis/noita-wiki-archive/` is also gitignored (wiki dump, images, videos, curated extracts). The index file `references/wikis/NOITA_WIKI.md` is tracked.
